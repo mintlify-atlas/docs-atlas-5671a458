@@ -1,0 +1,383 @@
+---
+title: 'Using Templates'
+description: 'Create and manage reusable deployment templates'
+---
+
+Templates allow you to save deployment configurations for quick reuse. Instead of entering the same settings every time, you can create a template once and deploy from it instantly.
+
+## Understanding Templates
+
+A template stores:
+
+- Cloud provider and server size
+- AI provider and model
+- Communication channel (Telegram, Slack, etc.)
+- Optional configurations like Tailscale
+
+<Tip>
+  Templates save time when deploying multiple similar instances or sharing configurations with your team.
+</Tip>
+
+**What templates DON'T store:**
+- API keys (for security)
+- Deployment names (each deployment must be unique)
+- Server-specific data like IP addresses
+
+## Built-in Templates
+
+ClawControl includes two tested templates:
+
+### Hetzner + OpenRouter Kimi K2.5
+
+```yaml
+Provider: Hetzner Cloud
+Location: Ashburn, VA (US East)
+Server: CPX11 (2 vCPU, 2GB RAM, 40GB SSD)
+AI Provider: OpenRouter
+Model: moonshotai/kimi-k2.5
+Channel: Telegram
+```
+
+**Best for:** Cost-effective deployments with good performance
+
+**Monthly cost:** ~$5-6 (Hetzner) + OpenRouter usage
+
+### DigitalOcean + OpenRouter Kimi K2.5
+
+```yaml
+Provider: DigitalOcean
+Location: NYC1 (New York)
+Server: s-1vcpu-2gb (1 vCPU, 2GB RAM, 50GB SSD)
+AI Provider: OpenRouter
+Model: moonshotai/kimi-k2.5
+Channel: Telegram
+```
+
+**Best for:** US-based deployments with DigitalOcean's ecosystem
+
+**Monthly cost:** ~$12 (DigitalOcean) + OpenRouter usage
+
+<Warning>
+  Built-in templates cannot be edited or deleted. Fork them to create customized versions.
+</Warning>
+
+## Viewing Templates
+
+<Steps>
+  <Step title="Open template manager">
+    From the ClawControl main menu:
+    
+    ```bash
+    /templates
+    ```
+    
+    You'll see a list of all available templates:
+    
+    ```
+    > Hetzner + OpenRouter Kimi K2.5 [built-in] · telegram
+      DigitalOcean + OpenRouter Kimi K2.5 [built-in] · telegram
+      My Custom Template [custom] · telegram
+    ```
+    
+    Use arrow keys to navigate, press Enter to view details.
+  </Step>
+
+  <Step title="View template details">
+    Select a template to see its full configuration:
+    
+    ```
+    Hetzner + OpenRouter Kimi K2.5
+    Deploy OpenClaw on Hetzner Cloud (US East) with OpenRouter
+    using Moonshotai Kimi K2.5 model via Telegram
+    
+    Type:         Built-in
+    Provider:     Hetzner Cloud
+    Server Type:  cpx11
+    Location:     ash
+    AI Provider:  openrouter
+    Model:        moonshotai/kimi-k2.5
+    Channel:      telegram
+    
+    [F]ork  [U]se  [Esc] Back
+    ```
+  </Step>
+</Steps>
+
+## Using a Template
+
+Deploy from a template in two ways:
+
+### Method 1: From Template Manager
+
+<Steps>
+  <Step title="Select template">
+    Navigate to `/templates` and select your desired template.
+  </Step>
+
+  <Step title="Press U to use">
+    Press `U` to use this template for a new deployment.
+    
+    The new deployment wizard opens with pre-filled settings:
+    ```
+    Using template: Hetzner + OpenRouter Kimi K2.5
+    
+    Step 1: Deployment Name
+    ```
+  </Step>
+
+  <Step title="Complete deployment">
+    You only need to provide:
+    - Deployment name
+    - API keys (if not saved)
+    - Telegram bot token
+    - Telegram user ID
+    
+    All other settings come from the template.
+  </Step>
+</Steps>
+
+### Method 2: From New Deployment Wizard
+
+<Steps>
+  <Step title="Start new deployment">
+    ```bash
+    /new
+    ```
+  </Step>
+
+  <Step title="Select template">
+    At the first step, choose a template instead of "Blank configuration":
+    
+    ```
+    Step 1: Choose Template
+    
+      Blank configuration
+    > Hetzner + OpenRouter Kimi K2.5 [built-in]
+      DigitalOcean + OpenRouter Kimi K2.5 [built-in]
+    ```
+  </Step>
+
+  <Step title="Continue with template">
+    The wizard skips provider and AI provider selection, using template values instead.
+  </Step>
+</Steps>
+
+## Creating Custom Templates
+
+Create templates by forking existing ones:
+
+<Steps>
+  <Step title="Select template to fork">
+    Go to `/templates` and choose a template as your starting point.
+  </Step>
+
+  <Step title="Press F to fork">
+    Press `F` to start the fork wizard:
+    
+    ```
+    Fork Template - Name
+    Enter a name for the new template:
+    
+    My Custom Template
+    ```
+  </Step>
+
+  <Step title="Customize settings">
+    The wizard walks through each setting:
+    
+    **Provider:**
+    ```
+    > Hetzner Cloud
+      DigitalOcean
+    ```
+    
+    **Droplet Size (DigitalOcean only):**
+    ```
+    > s-1vcpu-2gb - 1 vCPU, 2GB RAM, 50GB SSD - $12/mo
+      s-2vcpu-2gb - 2 vCPU, 2GB RAM, 60GB SSD - $18/mo
+      s-2vcpu-4gb - 2 vCPU, 4GB RAM, 80GB SSD - $24/mo
+    ```
+    
+    **AI Provider:**
+    ```
+      Anthropic - Claude models
+    > OpenAI - GPT models
+      OpenRouter - Access multiple providers
+      Google - Gemini models
+      Groq - Fast open-source models
+    ```
+    
+    **Model:**
+    ```
+    Model: gpt-4o
+    ```
+  </Step>
+
+  <Step title="Confirm and save">
+    Review your template configuration:
+    
+    ```
+    Fork Template - Confirm
+    
+    Name:         My GPT-4 Template
+    Provider:     DigitalOcean
+    Droplet Size: s-2vcpu-2gb
+    AI Provider:  openai
+    Model:        gpt-4o
+    Channel:      telegram
+    
+    Press Y to confirm, N to go back
+    ```
+    
+    Press `Y` to save. Your template is now available for deployments.
+  </Step>
+</Steps>
+
+## Managing Custom Templates
+
+### Editing Templates
+
+Templates cannot be edited directly. To modify a template:
+
+1. Fork the existing template with `F`
+2. Make your changes
+3. Delete the old template (if desired)
+
+### Deleting Templates
+
+<Steps>
+  <Step title="Select custom template">
+    Go to `/templates` and select a custom template.
+    
+    <Warning>
+      Only custom templates can be deleted. Built-in templates are permanent.
+    </Warning>
+  </Step>
+
+  <Step title="Press D to delete">
+    Press `D` to start deletion:
+    
+    ```
+    Delete Template
+    
+    Are you sure you want to delete "My Old Template"?
+    This action cannot be undone.
+    
+    Press Y to confirm, N to cancel
+    ```
+  </Step>
+
+  <Step title="Confirm deletion">
+    Press `Y` to permanently delete the template.
+  </Step>
+</Steps>
+
+## Example Templates
+
+### Development Template
+
+```yaml
+Name: Development Server
+Provider: Hetzner Cloud
+Server: cpx11 (2 vCPU, 2GB RAM)
+AI: OpenRouter - anthropic/claude-3-5-haiku
+Cost: ~$5-6/month
+```
+
+**Use case:** Testing and development with fast, inexpensive model
+
+### Production Template
+
+```yaml
+Name: Production Server
+Provider: DigitalOcean
+Server: s-2vcpu-4gb (2 vCPU, 4GB RAM)
+AI: Anthropic - claude-sonnet-4-20250514
+Cost: ~$24/month + Anthropic usage
+```
+
+**Use case:** Production deployment with powerful model and extra RAM
+
+### Multi-region Template
+
+```yaml
+Name: EU Server
+Provider: Hetzner Cloud
+Location: fsn1 (Germany)
+Server: cpx11
+AI: OpenRouter - moonshotai/kimi-k2.5
+```
+
+**Use case:** European deployment for GDPR compliance
+
+## Template Best Practices
+
+<Tip>
+  Create templates for different use cases:
+  - **dev-template**: Fast, cheap models for testing
+  - **prod-template**: Production-ready configuration
+  - **personal-template**: Your preferred settings
+  - **team-template**: Standardized team configuration
+</Tip>
+
+### Naming Conventions
+
+- Use descriptive names: "Production GPT-4 Server"
+- Include key details: "Hetzner - Claude Sonnet"
+- Avoid generic names: "Template 1", "Test"
+
+### Version Control
+
+Templates are stored as JSON files in `~/.clawcontrol/templates/`. You can:
+
+- Back them up: `cp -r ~/.clawcontrol/templates ~/backups/`
+- Share them: Send JSON files to teammates
+- Version control: Store in Git for team collaboration
+
+### Documentation
+
+When sharing templates, document:
+
+- Monthly cost estimate
+- Recommended use case
+- Model capabilities
+- Any special configuration
+
+## Sharing Templates
+
+<Steps>
+  <Step title="Export template">
+    Templates are stored at:
+    ```bash
+    ~/.clawcontrol/templates/template-id.json
+    ```
+    
+    Copy the JSON file:
+    ```bash
+    cp ~/.clawcontrol/templates/my-template.json ~/shared/
+    ```
+  </Step>
+
+  <Step title="Share with teammates">
+    Send the JSON file via:
+    - Email
+    - Slack
+    - Git repository
+    - Shared drive
+  </Step>
+
+  <Step title="Import template">
+    Recipients copy the file to their templates directory:
+    ```bash
+    cp shared-template.json ~/.clawcontrol/templates/
+    ```
+    
+    The template appears in ClawControl immediately.
+  </Step>
+</Steps>
+
+## Next Steps
+
+- [First Deployment](/guides/first-deployment) - Deploy using a template
+- [Managing Deployments](/guides/managing-deployments) - Fork deployments as templates
+- [Configuration Reference](/configuration/deployment-config) - Available template options

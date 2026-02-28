@@ -1,80 +1,491 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Deploy your first OpenClaw instance in minutes
 ---
 
-## Get started in three steps
+This guide walks you through deploying your first OpenClaw instance using ClawControl's interactive TUI.
 
-Get your documentation site running locally and make your first customization.
+<Note>
+Before you begin, ensure you have:
+- ClawControl installed ([Installation guide](/installation))
+- An API key from Hetzner Cloud or DigitalOcean
+- An AI provider API key (Anthropic, OpenAI, etc.)
+- A Telegram bot token from [@BotFather](https://t.me/botfather)
+- Your Telegram user ID (send `/start` to [@userinfobot](https://t.me/userinfobot))
+</Note>
 
-### Step 1: Set up your local environment
+## Launch ClawControl
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+Open your terminal and run:
+
+```bash
+clawcontrol
+```
+
+You'll see the ClawControl home screen with the ASCII logo and command palette.
+
+## Step 1: Initialize a new deployment
+
+<Steps>
+  <Step title="Type /new command">
+    In the command input at the bottom, type `/new` and press Enter.
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+    ```bash
+    Type a command (e.g., /new)...
+    > /new
+    ```
+  </Step>
+  
+  <Step title="Choose a template (optional)">
+    ClawControl offers built-in templates or you can start from a blank configuration:
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+    - **Blank configuration** - Set up everything manually
+    - **Built-in templates** - Pre-configured setups for common use cases
+    - **Custom templates** - Your saved configurations
     
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    Use arrow keys to select and press Enter. For this guide, select **Blank configuration**.
+  </Step>
+  
+  <Step title="Enter deployment name">
+    Give your deployment a unique name (lowercase, alphanumeric, hyphens only):
+    
+    ```
+    Name: my-openclaw-server
+    ```
+    
+    Press Enter to continue.
+  </Step>
+  
+  <Step title="Select cloud provider">
+    Choose your VPS provider:
+    
+    - **Hetzner** - Recommended, US East (Ashburn), ~$4.99/mo
+    - **DigitalOcean** - NYC1, customizable droplet sizes starting at $12/mo
+    
+    Use arrow keys and press Enter.
+  </Step>
+  
+  <Step title="Configure provider API key">
+    Choose to enter a new API key or use a saved one:
+    
+    - Select **Enter a new API key**
+    - Paste your Hetzner or DigitalOcean API token
+    - Press Enter
+    
+    ClawControl will validate the key. If valid, you'll be asked if you want to save it for future deployments.
+    
+    <Info>
+    **Get your API key:**
+    - Hetzner: [Generate API Token](https://docs.hetzner.com/cloud/api/getting-started/generating-api-token)
+    - DigitalOcean: [Create Personal Access Token](https://docs.digitalocean.com/reference/api/create-personal-access-token/)
+    </Info>
+  </Step>
+  
+  <Step title="Select droplet size (DigitalOcean only)">
+    If you chose DigitalOcean, select your droplet size:
+    
+    - **s-1vcpu-2gb** - 1 vCPU, 2GB RAM, 50GB SSD - $12/mo (minimum)
+    - **s-2vcpu-2gb** - 2 vCPU, 2GB RAM, 60GB SSD - $18/mo
+    - **s-2vcpu-4gb** - 2 vCPU, 4GB RAM, 80GB SSD - $24/mo
+    
+    <Warning>
+    OpenClaw requires at least 2GB RAM to avoid out-of-memory errors.
+    </Warning>
+  </Step>
+  
+  <Step title="Choose AI provider">
+    Select your AI model provider:
+    
+    - **Anthropic** - Claude models
+    - **OpenAI** - GPT models  
+    - **OpenRouter** - Multi-provider access
+    - **Google** - Gemini models
+    - **Groq** - Fast inference
+    
+    Press Enter to continue.
+  </Step>
+  
+  <Step title="Enter AI provider API key">
+    Paste your AI provider API key:
+    
+    - The prompt shows the environment variable name (e.g., `ANTHROPIC_API_KEY`)
+    - Enter or select a saved key
+    - ClawControl will offer to save it for future use
+  </Step>
+  
+  <Step title="Specify model identifier">
+    Enter the model you want to use:
+    
+    <CodeGroup>
+    ```text Anthropic
+    claude-sonnet-4-20250514
+    claude-3-5-haiku-20241022
+    ```
+    
+    ```text OpenAI  
+    gpt-4o
+    gpt-4o-mini
+    o1-preview
+    ```
+    
+    ```text Google
+    gemini-2.0-flash
+    gemini-1.5-pro
+    ```
+    
+    ```text Groq
+    llama-3.3-70b-versatile
+    ```
+    </CodeGroup>
+  </Step>
+  
+  <Step title="Configure Telegram bot">
+    Enter your Telegram bot token from [@BotFather](https://t.me/botfather):
+    
+    ```
+    Bot Token: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz
+    ```
+    
+    Then enter your Telegram user ID for access control:
+    
+    ```
+    Telegram User ID: 123456789
+    ```
+    
+    <Info>
+    Get your user ID by messaging [@userinfobot](https://t.me/userinfobot) on Telegram.
+    </Info>
+  </Step>
+  
+  <Step title="Configure Tailscale (optional)">
+    Choose whether to set up Tailscale for secure access:
+    
+    - **Skip** - Dashboard accessible via server IP only
+    - **Configure Tailscale** - Secure private VPN access (recommended)
+    
+    Tailscale creates a private network so only you can access the OpenClaw dashboard.
+  </Step>
+  
+  <Step title="Confirm configuration">
+    Review your settings and press `Y` to create the deployment configuration.
+    
+    ```
+    Deployment Name: my-openclaw-server
+    Provider: Hetzner (CPX11, Ashburn)
+    AI Provider: Anthropic (claude-sonnet-4-20250514)
+    Telegram: Configured
+    Tailscale: Enabled
+    
+    Press Y to confirm, N to cancel
+    ```
+  </Step>
+</Steps>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+## Step 2: Deploy to VPS
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+Now that your deployment is configured, it's time to provision the infrastructure.
 
-### Step 3: Go live
+<Steps>
+  <Step title="Run /deploy command">
+    From the home screen, type `/deploy` and press Enter.
+    
+    ```bash
+    > /deploy
+    ```
+  </Step>
+  
+  <Step title="Select deployment">
+    Choose the deployment you just created:
+    
+    ```
+    > my-openclaw-server  [initialized]  hetzner
+    ```
+    
+    Press Enter to continue.
+  </Step>
+  
+  <Step title="Confirm deployment">
+    Review the deployment details and costs:
+    
+    ```
+    Deploy "my-openclaw-server"?
+    
+    This will:
+    • Create a VPS on hetzner
+    • Install and configure OpenClaw  
+    • Set up Tailscale for secure access
+    
+    Estimated cost: ~$4.99/month (Hetzner CPX11)
+    
+    Press Y to confirm, N to cancel
+    ```
+    
+    Press `Y` to begin deployment.
+  </Step>
+  
+  <Step title="Watch deployment progress">
+    ClawControl will now execute all deployment checkpoints automatically:
+    
+    ```
+    [1/15] Creating VPS server...
+    [2/15] Uploading SSH keys...
+    [3/15] Connecting via SSH...
+    [4/15] Setting up swap memory...
+    [5/15] Updating system packages...
+    [6/15] Installing NVM...
+    [7/15] Installing Node.js...
+    [8/15] Installing pnpm...
+    [9/15] Installing Google Chrome...
+    [10/15] Installing OpenClaw...
+    [11/15] Configuring OpenClaw...
+    [12/15] Installing Tailscale...
+    ```
+    
+    This process typically takes 5-10 minutes depending on your provider and network speed.
+  </Step>
+  
+  <Step title="Authenticate Tailscale">
+    If you enabled Tailscale, ClawControl will prompt you to authenticate:
+    
+    ```
+    Tailscale needs authentication.
+    
+    Tailscale is a secure networking tool that creates a private VPN 
+    between your devices and your OpenClaw server, so the gateway is 
+    only accessible to you.
+    
+    Would you like to open your browser to authenticate?
+    
+    URL: https://login.tailscale.com/a/...
+    ```
+    
+    Press `Y` to open your browser, log in with your Tailscale account (or create one), and authorize the device.
+  </Step>
+  
+  <Step title="Start OpenClaw daemon">
+    The final checkpoint starts the OpenClaw systemd service:
+    
+    ```
+    [15/15] Starting OpenClaw daemon...
+    OpenClaw daemon is running.
+    
+    Your OpenClaw config has been applied and the daemon is running.
+    
+    Would you like to also run 'openclaw onboard' interactively for 
+    additional setup? (This is optional — your agent is already configured.)
+    ```
+    
+    - Press `Y` to run the interactive onboarding in a terminal window
+    - Press `N` to skip (the daemon is already configured and running)
+  </Step>
+</Steps>
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+## Step 3: Verify deployment
+
+<Steps>
+  <Step title="Check deployment status">
+    From the home screen, type `/status` and press Enter:
+    
+    ```bash
+    > /status
+    ```
+    
+    You'll see your deployment details:
+    
+    ```
+    Details: my-openclaw-server
+    Status:          deployed
+    Provider:        hetzner
+    Server IP:       1.2.3.4
+    Tailscale IP:    100.64.0.1
+    Created:         1/15/2026, 10:30:00 AM
+    Deployed:        1/15/2026, 10:42:00 AM
+    ```
+  </Step>
+  
+  <Step title="Run health check">
+    With your deployment selected in `/status`, press Enter to run a health check:
+    
+    ```
+    Health Check:
+    SSH:         Connected
+    OpenClaw:    Running
+    Last checked: 10:45:30 AM
+    ```
+  </Step>
+  
+  <Step title="Access OpenClaw dashboard">
+    Type `/dashboard` and select your deployment to open the web interface:
+    
+    ```bash
+    > /dashboard
+    ```
+    
+    If Tailscale is configured, the dashboard will open at your Tailscale IP. Otherwise, it uses the public server IP.
+  </Step>
+</Steps>
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="View logs" icon="scroll">
+    Monitor your OpenClaw instance with `/logs` to stream real-time logs from the daemon.
+  </Card>
+  
+  <Card title="SSH access" icon="terminal">
+    Use `/ssh` to open a terminal session directly on your server for manual debugging or configuration.
+  </Card>
+  
+  <Card title="Manage templates" icon="layer-group">
+    Save your configuration as a template with `/templates` for quick redeployment or to fork variations.
+  </Card>
+  
+  <Card title="Destroy deployment" icon="trash">
+    When you're done, run `/destroy` to safely tear down the VPS and clean up all resources.
+  </Card>
 </CardGroup>
 
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
+## Common workflows
+
+### Stream logs in real-time
+
+```bash
+clawcontrol
+> /logs
+# Select deployment with arrow keys
+# Press Enter to stream logs
+# Press Esc to stop
+```
+
+### SSH into your server
+
+```bash
+clawcontrol  
+> /ssh
+# Select deployment
+# Opens terminal with automatic SSH connection
+```
+
+### Edit and redeploy
+
+```bash
+clawcontrol
+> /list
+# Select deployment
+# Choose "Edit" to modify configuration
+# Run /deploy to apply changes
+```
+
+### Fork a deployment
+
+```bash
+clawcontrol
+> /list  
+# Select deployment
+# Choose "Fork" to create a copy
+# Modify settings and deploy independently
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Deployment fails at 'Creating VPS server'">
+    **Possible causes:**
+    - Invalid API key
+    - Insufficient account credits  
+    - Region quota exceeded
+    - Name already in use
+    
+    **Solutions:**
+    1. Verify your API key is correct and has permissions
+    2. Check your provider account has available credits
+    3. Try a different deployment name
+    4. Run `/destroy` to clean up any partial resources, then try again
+  </Accordion>
+  
+  <Accordion title="SSH connection timeout">
+    The server may still be booting or there's a network issue.
+    
+    **Solutions:**
+    1. Wait 2-3 minutes and let ClawControl retry automatically
+    2. Check your provider's console to verify the server is running
+    3. Ensure port 22 (SSH) is not blocked by firewall rules
+  </Accordion>
+  
+  <Accordion title="OpenClaw daemon not running after deployment">
+    Check the daemon status:
+    
+    ```bash
+    clawcontrol
+    > /ssh
+    # In the SSH session:
+    systemctl status openclaw
+    journalctl -u openclaw -f
+    ```
+    
+    Common issues:
+    - Missing or invalid API keys in environment
+    - Telegram token authentication failed
+    - Out of memory (increase server size)
+  </Accordion>
+  
+  <Accordion title="Tailscale authentication not completing">
+    If you miss the authentication window:
+    
+    1. SSH into your server: `/ssh`
+    2. Run: `sudo tailscale up`
+    3. Open the authentication URL manually
+    4. Complete authentication
+    5. Run: `sudo tailscale serve https / http://127.0.0.1:8888`
+  </Accordion>
+  
+  <Accordion title="Deployment stuck on a checkpoint">
+    ClawControl will retry failed steps up to 3 times. If a checkpoint keeps failing:
+    
+    1. Check the error message for specific details
+    2. Press `N` when asked to retry from beginning
+    3. Use `/ssh` to investigate the server directly
+    4. Fix the issue manually or `/destroy` and start fresh
+  </Accordion>
+</AccordionGroup>
+
+## Example deployment output
+
+Here's what a successful deployment looks like:
+
+```bash
+$ clawcontrol
+> /new
+
+# ... configuration wizard ...
+
+> /deploy
+
+[1/15] Creating VPS server...                    ✓ Complete (30s)
+[2/15] Uploading SSH keys...                     ✓ Complete (2s)
+[3/15] Connecting via SSH...                     ✓ Complete (45s)
+[4/15] Setting up swap memory...                 ✓ Complete (15s)
+[5/15] Updating system packages...               ✓ Complete (120s)
+[6/15] Installing NVM...                          ✓ Complete (10s)
+[7/15] Installing Node.js...                      ✓ Complete (30s)
+[8/15] Installing pnpm...                         ✓ Complete (5s)
+[9/15] Installing Google Chrome...                ✓ Complete (45s)
+[10/15] Installing OpenClaw...                    ✓ Complete (60s)
+[11/15] Configuring OpenClaw...                   ✓ Complete (10s)
+[12/15] Installing Tailscale...                   ✓ Complete (20s)
+[13/15] Authenticating Tailscale...               ✓ Complete (30s)
+[14/15] Configuring Tailscale...                  ✓ Complete (15s)
+[15/15] Starting OpenClaw daemon...               ✓ Complete (10s)
+
+Deployment complete! 🎉
+
+Your OpenClaw instance is running at:
+- Public IP: https://1.2.3.4:8888
+- Tailscale: https://100.64.0.1:8888
+
+Press any key to return home...
+```
+
+<Check>
+**Congratulations!** You've successfully deployed your first OpenClaw instance with ClawControl.
+</Check>

@@ -1,0 +1,250 @@
+---
+title: /new
+description: Initialize a new deployment configuration
+---
+
+The `/new` command creates a new deployment configuration through an interactive multi-step wizard. It collects all necessary information for deploying an OpenClaw instance.
+
+## Usage
+
+```
+/new
+```
+
+## Configuration Steps
+
+The wizard guides you through these steps:
+
+### 1. Template Selection
+
+Choose to start from a template or create a blank configuration:
+
+```
+Step 1: Choose Template
+Start from a template or blank configuration (use arrow keys and Enter):
+
+┌────────────────────────────────────────┐
+│ > Blank configuration                  │
+│   Anthropic Claude (Telegram) [built-in] │
+│   OpenAI GPT-4 (Telegram) [built-in]  │
+└────────────────────────────────────────┘
+```
+
+### 2. Deployment Name
+
+Enter a unique name (lowercase, alphanumeric, hyphens allowed):
+
+```
+Step 2: Deployment Name
+Enter a unique name for this deployment:
+
+Name: my-openclaw-server
+```
+
+### 3. Cloud Provider
+
+Select your cloud provider:
+
+```
+Step 3: Cloud Provider
+Select where to deploy (use arrow keys and Enter):
+
+┌────────────────────────────────────────┐
+│ > Hetzner Cloud - Recommended - US East│
+│   DigitalOcean - NYC1 - New York       │
+└────────────────────────────────────────┘
+```
+
+### 4. API Key
+
+Choose a saved API key or enter a new one:
+
+```
+Step 4: Hetzner API Key
+Choose a saved key or enter a new one:
+
+┌────────────────────────────────────────┐
+│ > Enter a new API key                  │
+│   prod-key (hetzner_...)               │
+└────────────────────────────────────────┘
+```
+
+If entering a new key:
+- The key is validated against the provider's API
+- You'll be prompted to save it for future use
+- Saved keys are stored securely in `~/.clawcontrol/secrets/`
+
+### 5. Droplet Size (DigitalOcean Only)
+
+Select your droplet size:
+
+```
+Step 5: Droplet Size
+Select your DigitalOcean droplet size:
+
+NOTE: Minimum size for OpenClaw is 2GB RAM
+
+┌────────────────────────────────────────┐
+│ > s-1vcpu-2gb - 1 vCPU, 2GB RAM - $12/mo │
+│   s-2vcpu-2gb - 2 vCPU, 2GB RAM - $18/mo │
+│   s-2vcpu-4gb - 2 vCPU, 4GB RAM - $24/mo │
+└────────────────────────────────────────┘
+```
+
+### 6. AI Provider
+
+Select your AI model provider:
+
+```
+Step 6: AI Provider
+Select your AI model provider:
+
+┌────────────────────────────────────────┐
+│ > Anthropic - Claude models            │
+│   OpenAI - GPT models                  │
+│   Google - Gemini models               │
+│   Groq - Fast inference                │
+│   OpenRouter - Multi-provider gateway  │
+└────────────────────────────────────────┘
+```
+
+### 7. AI API Key
+
+Provide your AI provider API key (can be saved for reuse).
+
+### 8. Model
+
+Enter the model identifier:
+
+```
+Step 8: Default Model
+Enter the model identifier for Anthropic.
+
+e.g. claude-sonnet-4-20250514, claude-3-5-haiku-20241022
+
+Model: claude-sonnet-4-20250514
+```
+
+### 9. Telegram Bot Token
+
+Provide your Telegram bot token (from [@BotFather](https://t.me/botfather)).
+
+### 10. Telegram User Access
+
+Specify which Telegram user IDs can access the bot:
+
+```
+Step 10: Telegram User ID
+Enter your Telegram user ID for access control.
+
+User ID: 123456789
+```
+
+### 11. Tailscale Configuration
+
+Choose whether to configure Tailscale VPN:
+
+```
+Step 11: Tailscale
+Select Tailscale configuration:
+
+┌────────────────────────────────────────┐
+│ > Skip                                 │
+│   Configure Tailscale                  │
+└────────────────────────────────────────┘
+```
+
+### 12. Confirmation
+
+Review and confirm your configuration:
+
+```
+Deployment Configuration Summary
+
+Name:           my-openclaw-server
+Provider:       hetzner
+Server:         CPX11 (2 vCPU, 2GB RAM)
+Location:       Ashburn, VA (US East)
+AI Provider:    anthropic
+Model:          claude-sonnet-4-20250514
+Channel:        telegram
+Tailscale:      Enabled
+
+Press Y to confirm, N to go back
+```
+
+## Edit Mode
+
+You can edit existing deployments from the `/list` command. Edit mode skips some steps (name, provider) and pre-fills existing values.
+
+## Fork Mode
+
+Fork an existing deployment to create a copy with a new name. Use this from `/list` or `/templates`.
+
+## Key Features
+
+- **API Key Validation**: All provider and AI keys are validated in real-time
+- **Secure Storage**: API keys and tokens are stored securely
+- **Key Reuse**: Save keys once and reuse across multiple deployments
+- **Template Support**: Start from built-in or custom templates
+- **Flexible Navigation**: Use Esc to go back, arrow keys to navigate
+
+## Tips
+
+<Tip>
+  Use templates (via `/templates`) to create reusable presets for common configurations. This saves time when creating multiple similar deployments.
+</Tip>
+
+<Warning>
+  The minimum recommended RAM for OpenClaw is 2GB. Smaller instances may experience out-of-memory errors.
+</Warning>
+
+## Example Terminal Output
+
+```
+clawcontrol v0.2.3
+
+> /new
+
+Step 1: Choose Template
+┌────────────────────────────────────────┐
+│ > Blank configuration                  │
+│   Anthropic Claude (Telegram) [built-in] │
+└────────────────────────────────────────┘
+
+[Enter]
+
+Step 2: Deployment Name
+Name: production-claude
+
+[Enter]
+
+Validating API key...
+✓ API key validated successfully
+
+Step 4: Hetzner API Key
+Would you like to save this API key for future deployments?
+Press Y to save, N to skip
+
+[Y]
+
+Key Name: prod-hetzner
+✓ Key saved
+
+...
+
+Deployment created successfully!
+Run /deploy to deploy to the cloud.
+```
+
+## Next Steps
+
+After creating a deployment configuration:
+
+1. Review it with `/list`
+2. Deploy it with `/deploy`
+3. Monitor with `/status`
+
+<Card title="Deploy Command" icon="rocket" href="/cli/deploy">
+  Deploy your configuration to the cloud
+</Card>

@@ -1,0 +1,277 @@
+---
+title: Templates
+description: Use templates to quickly deploy OpenClaw with pre-configured settings
+---
+
+Templates are pre-configured deployment blueprints that make it easy to create new OpenClaw instances with consistent settings. Instead of manually configuring every deployment, you can start from a template and customize only what you need.
+
+## What are Templates?
+
+A template defines the default configuration for a deployment, including:
+
+- **Cloud provider** (Hetzner, DigitalOcean, etc.)
+- **Server specifications** (CPU, RAM, location)
+- **AI provider and model** (OpenRouter, Anthropic, etc.)
+- **Communication channel** (Telegram, Discord, etc.)
+
+<Info>
+Templates don't include secrets like API keys. You'll be prompted for those during deployment creation.
+</Info>
+
+## Template Structure
+
+From the source code at `src/types/index.ts:211-233`:
+
+```typescript
+interface Template {
+  id: string;              // Unique template identifier
+  name: string;            // Display name
+  description: string;     // What this template is for
+  builtIn: boolean;        // Whether this is a built-in template
+  createdAt: string;
+  provider: "hetzner" | "digitalocean" | "vultr";
+  
+  // Provider-specific defaults
+  hetzner?: {
+    serverType: string;    // e.g., "cpx11"
+    location: string;      // e.g., "ash" (Ashburn, VA)
+    image: string;         // e.g., "ubuntu-24.04"
+  };
+  digitalocean?: {
+    size: string;          // e.g., "s-1vcpu-2gb"
+    region: string;        // e.g., "nyc1"
+    image: string;         // e.g., "ubuntu-24-04-x64"
+  };
+  
+  // AI configuration defaults
+  aiProvider: string;      // e.g., "openrouter"
+  model: string;           // e.g., "moonshotai/kimi-k2.5"
+  channel: string;         // e.g., "telegram"
+}
+```
+
+## Built-in Templates
+
+ClawControl comes with pre-configured templates for common scenarios. From `src/services/templates.ts:16-51`:
+
+### Hetzner + OpenRouter Kimi K2.5
+
+```json
+{
+  "id": "hetzner-telegram-openrouter-kimi",
+  "name": "Hetzner + OpenRouter Kimi K2.5",
+  "description": "Deploy OpenClaw on Hetzner Cloud (US East) with OpenRouter using Moonshotai Kimi K2.5 model via Telegram",
+  "builtIn": true,
+  "provider": "hetzner",
+  "hetzner": {
+    "serverType": "cpx11",
+    "location": "ash",
+    "image": "ubuntu-24.04"
+  },
+  "aiProvider": "openrouter",
+  "model": "moonshotai/kimi-k2.5",
+  "channel": "telegram"
+}
+```
+
+**Best for:** Cost-effective deployment in US East with a powerful AI model
+
+### DigitalOcean + OpenRouter Kimi K2.5
+
+```json
+{
+  "id": "digitalocean-telegram-openrouter-kimi",
+  "name": "DigitalOcean + OpenRouter Kimi K2.5",
+  "description": "Deploy OpenClaw on DigitalOcean (NYC1) with OpenRouter using Moonshotai Kimi K2.5 model via Telegram",
+  "builtIn": true,
+  "provider": "digitalocean",
+  "digitalocean": {
+    "size": "s-1vcpu-2gb",
+    "region": "nyc1",
+    "image": "ubuntu-24-04-x64"
+  },
+  "aiProvider": "openrouter",
+  "model": "moonshotai/kimi-k2.5",
+  "channel": "telegram"
+}
+```
+
+**Best for:** DigitalOcean users or deployments requiring NYC region
+
+<Note>
+Built-in templates are automatically seeded to `~/.clawcontrol/templates/` on first use.
+</Note>
+
+## Using Templates
+
+### List Available Templates
+
+```bash
+clawcontrol templates
+```
+
+This shows all templates, with built-in templates listed first.
+
+### Create Deployment from Template
+
+When you run `clawcontrol new`, you'll be prompted to select a template. The template's settings become the defaults for your new deployment.
+
+You can customize any setting during creation:
+
+```bash
+# Start from a template, then customize
+clawcontrol new
+# Select template: Hetzner + OpenRouter Kimi K2.5
+# Override defaults as needed
+```
+
+## Creating Custom Templates
+
+You can create custom templates by forking existing ones or creating new template files.
+
+### Fork an Existing Template
+
+The easiest way to create a custom template:
+
+1. Use the templates command to view existing templates
+2. Create a deployment from a template
+3. Save your custom configuration as a new template
+
+### Manual Template Creation
+
+Create a new file in `~/.clawcontrol/templates/<template-id>.json`:
+
+```json
+{
+  "id": "my-custom-template",
+  "name": "My Custom Setup",
+  "description": "Custom configuration for my use case",
+  "builtIn": false,
+  "createdAt": "2025-01-15T10:00:00.000Z",
+  "provider": "hetzner",
+  "hetzner": {
+    "serverType": "cpx21",
+    "location": "nbg1",
+    "image": "ubuntu-24.04"
+  },
+  "aiProvider": "anthropic",
+  "model": "claude-3-5-sonnet-20241022",
+  "channel": "telegram"
+}
+```
+
+<Accordion title="View complete template implementation">
+From `src/services/templates.ts:109-113`:
+
+```typescript
+export function saveTemplate(template: Template): void {
+  ensureTemplatesDir();
+  const validated = TemplateSchema.parse(template);
+  writeFileSync(getTemplatePath(validated.id), JSON.stringify(validated, null, 2));
+}
+```
+</Accordion>
+
+## Managing Templates
+
+### Template Storage
+
+All templates are stored in `~/.clawcontrol/templates/`:
+
+```
+~/.clawcontrol/
+└── templates/
+    ├── hetzner-telegram-openrouter-kimi.json
+    ├── digitalocean-telegram-openrouter-kimi.json
+    └── my-custom-template.json
+```
+
+### Deleting Custom Templates
+
+You can delete custom templates by removing their JSON file:
+
+```bash
+rm ~/.clawcontrol/templates/my-custom-template.json
+```
+
+<Warning>
+Built-in templates cannot be deleted. They are automatically re-created if removed.
+</Warning>
+
+## Template Auto-Seeding
+
+From `src/services/templates.ts:63-71`:
+
+```typescript
+function seedBuiltInTemplates(): void {
+  ensureTemplatesDir();
+  for (const template of BUILT_IN_TEMPLATES) {
+    const path = getTemplatePath(template.id);
+    if (!existsSync(path)) {
+      writeFileSync(path, JSON.stringify(template, null, 2));
+    }
+  }
+}
+```
+
+Built-in templates are automatically created when you first use templates, ensuring you always have working starting points.
+
+## Why Use Templates?
+
+<CardGroup cols={2}>
+  <Card title="Consistency" icon="check-double">
+    Ensure all your deployments use the same base configuration.
+  </Card>
+  
+  <Card title="Speed" icon="bolt">
+    Skip repetitive configuration and get to deployment faster.
+  </Card>
+  
+  <Card title="Best Practices" icon="graduation-cap">
+    Built-in templates use tested, optimized settings.
+  </Card>
+  
+  <Card title="Team Sharing" icon="users">
+    Share template files with your team for standardized deployments.
+  </Card>
+</CardGroup>
+
+## Template Selection Tips
+
+<Steps>
+  <Step title="Choose your provider">
+    Select based on your cloud provider preference and region requirements.
+  </Step>
+  
+  <Step title="Consider server specs">
+    Built-in templates use minimal specs (1 vCPU, 2GB RAM). Create custom templates for larger deployments.
+  </Step>
+  
+  <Step title="Match your AI provider">
+    Start with OpenRouter templates if you want access to multiple models through one API.
+  </Step>
+  
+  <Step title="Customize as needed">
+    Templates are starting points - you can override any setting during deployment creation.
+  </Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Create a Deployment" icon="plus" href="/cli/new">
+    Use a template to create your first deployment
+  </Card>
+  
+  <Card title="Providers" icon="server" href="/concepts/providers">
+    Learn about supported cloud providers
+  </Card>
+  
+  <Card title="Deployments" icon="rocket" href="/concepts/deployments">
+    Understand the full deployment lifecycle
+  </Card>
+  
+  <Card title="Templates Command" icon="list" href="/cli/templates">
+    See all template management commands
+  </Card>
+</CardGroup>

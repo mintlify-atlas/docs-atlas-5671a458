@@ -1,0 +1,232 @@
+---
+title: 'DigitalOcean'
+description: 'Deploy OpenClaw instances on DigitalOcean Droplets'
+icon: 'water'
+---
+
+DigitalOcean is a global cloud infrastructure provider with extensive region coverage. ClawControl provides full support for DigitalOcean Droplets, making it easy to deploy OpenClaw instances worldwide.
+
+## API Token Setup
+
+Before deploying to DigitalOcean, you need to create an API token:
+
+1. Sign up for a [DigitalOcean account](https://cloud.digitalocean.com/)
+2. Navigate to **API** in the left sidebar
+3. Click **Generate New Token**
+4. Give it a descriptive name (e.g., "ClawControl")
+5. Select **Read & Write** scopes
+6. Click **Generate Token**
+7. Copy the token immediately (it won't be shown again)
+
+<Warning>
+  Store your API token securely. Anyone with this token can create and manage resources in your DigitalOcean account.
+</Warning>
+
+## Configuration Options
+
+DigitalOcean deployments support the following configuration options:
+
+### Droplet Size
+
+Choose from various droplet sizes based on your needs:
+
+| Size | vCPUs | RAM | Disk | Transfer | Price/Month |
+|------|-------|-----|------|----------|-------------|
+| **s-1vcpu-2gb** (default) | 1 | 2 GB | 50 GB | 2 TB | $12 |
+| s-2vcpu-2gb | 2 | 2 GB | 60 GB | 3 TB | $18 |
+| s-2vcpu-4gb | 2 | 4 GB | 80 GB | 4 TB | $24 |
+| s-4vcpu-8gb | 4 | 8 GB | 160 GB | 5 TB | $48 |
+
+<Tip>
+  The **s-1vcpu-2gb** size is recommended for basic OpenClaw deployments and provides reliable performance.
+</Tip>
+
+### Region
+
+Available DigitalOcean regions:
+
+**North America:**
+- **nyc1** (New York City 1) - Default
+- **nyc3** (New York City 3)
+- **sfo3** (San Francisco 3)
+- **tor1** (Toronto 1)
+
+**Europe:**
+- **ams3** (Amsterdam 3)
+- **lon1** (London 1)
+- **fra1** (Frankfurt 1)
+
+**Asia-Pacific:**
+- **sgp1** (Singapore 1)
+- **blr1** (Bangalore 1)
+
+### Image
+
+ClawControl uses **ubuntu-24-04-x64** as the default operating system image, which is fully tested and supported.
+
+## Default Configuration
+
+When you create a new DigitalOcean deployment, these defaults are used:
+
+```typescript
+{
+  apiKey: string,              // Your DigitalOcean API token
+  size: "s-1vcpu-2gb",         // 1 vCPU, 2GB RAM
+  region: "nyc1",              // New York City
+  image: "ubuntu-24-04-x64"   // Ubuntu 24.04 LTS
+}
+```
+
+## Creating a Deployment
+
+Using the ClawControl CLI:
+
+```bash
+clawcontrol /new
+```
+
+Select **DigitalOcean** as your provider and provide:
+
+1. **Deployment Name**: A unique identifier for this deployment
+2. **API Token**: Your DigitalOcean API token
+3. **Droplet Size**: Choose from available options (default: s-1vcpu-2gb)
+4. **Region**: Select a datacenter location (default: nyc1)
+5. **OpenClaw Configuration**: AI provider, model, and channel settings
+
+## Deployment Process
+
+When you run `/deploy`, ClawControl will:
+
+1. **Create SSH Key**: Generates and uploads an SSH key to DigitalOcean
+2. **Provision Droplet**: Creates a new droplet with your specifications
+3. **Configure System**: Installs Node.js, Chrome, and dependencies
+4. **Install OpenClaw**: Deploys and configures the OpenClaw agent
+5. **Setup Tailscale**: Configures secure VPN access (optional)
+6. **Start Services**: Launches OpenClaw as a systemd service
+
+<Note>
+  The entire deployment process typically takes 5-10 minutes depending on droplet provisioning time.
+</Note>
+
+## API Operations
+
+ClawControl uses the DigitalOcean API to manage your deployment:
+
+### Droplet Management
+- Create, delete, and list droplets
+- Power on/off, reboot, and shutdown operations
+- Monitor droplet status and wait for active state
+
+### SSH Key Management
+- Upload public SSH keys for secure access
+- List and delete SSH keys (by ID or fingerprint)
+- Retrieve SSH key details
+
+### Resource Information
+- List available droplet sizes and pricing
+- Query available regions and availability
+- Check action status and completion
+
+## Monitoring Your Deployment
+
+After deployment, use these commands to monitor your instance:
+
+```bash
+# View deployment status
+clawcontrol /status
+
+# SSH into your droplet
+clawcontrol /ssh
+
+# View OpenClaw logs
+clawcontrol /logs
+```
+
+## Pricing and Billing
+
+DigitalOcean charges are:
+- **Hourly billing** with monthly caps
+- **Predictable pricing** based on droplet size
+- **No bandwidth overage fees** within transfer limits
+- **Automated billing** charged to your payment method
+
+<Tip>
+  You can view detailed pricing and usage in the [DigitalOcean Control Panel](https://cloud.digitalocean.com/billing) under Billing.
+</Tip>
+
+## Advanced Configuration
+
+### Custom Droplet Sizes
+
+If you need more resources, DigitalOcean offers:
+
+- **Basic droplets**: Cost-effective shared CPU
+- **General Purpose**: Dedicated CPU with balanced resources
+- **CPU-Optimized**: High CPU-to-memory ratio
+- **Memory-Optimized**: High memory-to-CPU ratio
+
+### Optional Features
+
+When creating droplets, you can enable:
+
+- **Backups**: Automated weekly backups (+20% of droplet cost)
+- **IPv6**: Enable IPv6 networking (free)
+- **User Data**: Cloud-init scripts for custom provisioning
+- **Tags**: Organize and filter your droplets
+
+### Regional Considerations
+
+Choose your region based on:
+- **Latency**: Select the region closest to your users
+- **Compliance**: EU regions for GDPR compliance
+- **Features**: Some features may vary by region
+
+## Troubleshooting
+
+### API Token Issues
+
+If you encounter authentication errors:
+
+1. Verify your API token has **Read & Write** scopes
+2. Ensure the token hasn't been deleted or revoked
+3. Check that you're logged into the correct account
+
+### Droplet Creation Failures
+
+Common issues:
+- **Quota limits**: Check your account droplet limits
+- **Region availability**: Try a different region if droplets are unavailable
+- **Payment issues**: Ensure your payment method is valid
+
+### Connection Problems
+
+If SSH connection fails:
+
+1. Verify the droplet is in "active" state
+2. Check that SSH keys were properly uploaded
+3. Ensure firewall rules allow SSH (port 22)
+4. Verify your local SSH client configuration
+
+## Cleanup and Deletion
+
+To remove a deployment:
+
+```bash
+clawcontrol /destroy
+```
+
+This will:
+- Delete the droplet from DigitalOcean
+- Remove uploaded SSH keys
+- Clean up local configuration files
+
+<Warning>
+  Destroying a deployment is permanent. Make sure to backup any important data before deletion.
+</Warning>
+
+## Additional Resources
+
+- [DigitalOcean Documentation](https://docs.digitalocean.com/)
+- [DigitalOcean Control Panel](https://cloud.digitalocean.com/)
+- [DigitalOcean API Reference](https://docs.digitalocean.com/reference/api/)
+- [OpenClaw Documentation](https://docs.openclaw.ai/)

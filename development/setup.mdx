@@ -1,0 +1,230 @@
+---
+title: Development Setup
+description: Set up your local development environment for ClawControl
+---
+
+## Prerequisites
+
+Before setting up ClawControl for local development, ensure you have the following installed:
+
+- **[Bun](https://bun.sh)** - Required runtime for the CLI (used by @opentui/core)
+- **Node.js >= 20.0.0** - JavaScript runtime
+- **pnpm 10.25.x** - Package manager
+
+<Steps>
+  <Step title="Install Bun">
+    If you don't have Bun installed:
+    
+    ```bash
+    curl -fsSL https://bun.sh/install | bash
+    ```
+  </Step>
+
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/ipenywis/clawcontrol.git
+    cd clawcontrol
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    ```bash
+    pnpm install
+    ```
+  </Step>
+
+  <Step title="Run the development server">
+    ```bash
+    pnpm dev
+    ```
+    
+    This runs ClawControl locally with hot-reload enabled using Bun's `--watch` flag.
+  </Step>
+</Steps>
+
+## Available Scripts
+
+The following npm scripts are available in `package.json`:
+
+### Development
+
+```bash
+pnpm dev
+```
+
+Runs the CLI in development mode with automatic reloading on file changes. Uses `bun --watch src/index.tsx`.
+
+### Build
+
+```bash
+pnpm build
+```
+
+Builds the production bundle using [tsup](https://tsup.egoist.dev/). The output is generated in the `dist/` directory as ESM modules targeting ES2022.
+
+Build configuration is in `tsup.config.ts`:
+- Entry point: `src/index.tsx`
+- Format: ESM
+- Target: ES2022
+- External dependencies: `@opentui/core`, `@opentui/react`, `react`, `ssh2`, `cpu-features`
+
+<Note>
+  `@opentui/core` must remain external because it uses Bun-specific features like `bun:ffi` and Bun import attributes that cannot be bundled.
+</Note>
+
+### Start
+
+```bash
+pnpm start
+```
+
+Runs the built version from `dist/index.js` using Bun.
+
+### Type Checking
+
+```bash
+pnpm typecheck
+```
+
+Runs TypeScript type checking without emitting files. Uses `tsc --noEmit` to validate types across the codebase.
+
+### Testing
+
+```bash
+pnpm test
+```
+
+Runs all tests using Vitest in run mode (non-watch). See [Testing](/development/testing) for more details.
+
+### Pre-publish
+
+```bash
+pnpm prepublishOnly
+```
+
+Automatically runs before publishing to npm. Executes `pnpm build` to ensure the latest version is bundled.
+
+## Local Development Workflow
+
+### Running Locally
+
+1. **Start development mode:**
+   ```bash
+   pnpm dev
+   ```
+
+2. **Make changes** to source files in `src/`
+
+3. **Test your changes** - The CLI will automatically reload
+
+4. **Run type checks** to catch errors:
+   ```bash
+   pnpm typecheck
+   ```
+
+5. **Run tests** to ensure everything works:
+   ```bash
+   pnpm test
+   ```
+
+### Testing the Built Version
+
+To test the production build:
+
+```bash
+pnpm build
+pnpm start
+```
+
+Or test the binary wrapper:
+
+```bash
+pnpm build
+node bin/clawcontrol.js
+```
+
+### Development with Provider APIs
+
+When testing deployments locally, you'll need valid API keys for cloud providers:
+
+- **Hetzner Cloud**: Get an API key from [Hetzner Cloud Console](https://console.hetzner.cloud/)
+- **DigitalOcean**: Get an API token from [DigitalOcean Control Panel](https://cloud.digitalocean.com/account/api/tokens)
+
+These keys are stored securely in `~/.clawcontrol/secrets.json` when you create a deployment.
+
+## Project Configuration
+
+### TypeScript Configuration
+
+The project uses TypeScript with the following key settings (`tsconfig.json`):
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "jsxImportSource": "@opentui/react",
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  }
+}
+```
+
+- **JSX**: React JSX with `@opentui/react` as the import source
+- **Module Resolution**: "bundler" mode for modern bundler compatibility
+- **Strict Mode**: Enabled for type safety
+- **Path Aliases**: `@/*` maps to `src/*`
+
+### Package Manager
+
+The project is locked to `pnpm@10.25.0` via the `packageManager` field in `package.json`. This ensures consistent dependency resolution across development environments.
+
+## Troubleshooting
+
+### Bun Not Found
+
+If you get "bun: command not found":
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+# Then restart your shell or run:
+source ~/.bashrc  # or ~/.zshrc
+```
+
+### Module Resolution Errors
+
+If you encounter module resolution errors:
+
+1. Clear node_modules and reinstall:
+   ```bash
+   rm -rf node_modules
+   pnpm install
+   ```
+
+2. Ensure you're using the correct Node version:
+   ```bash
+   node --version  # Should be >= 20.0.0
+   ```
+
+### Type Errors
+
+Run type checking to see detailed errors:
+
+```bash
+pnpm typecheck
+```
+
+Common issues:
+- Missing `@types/*` packages (should be in devDependencies)
+- JSX configuration mismatch (check `tsconfig.json`)
+
+## Next Steps
+
+- Learn about the [Architecture](/development/architecture) of ClawControl
+- Explore the [Testing](/development/testing) setup and write tests
+- Check the [CLI Reference](/cli/overview) for command documentation

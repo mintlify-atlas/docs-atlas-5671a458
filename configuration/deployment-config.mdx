@@ -1,0 +1,185 @@
+---
+title: 'Deployment Configuration'
+description: 'Configure your ClawControl deployment settings'
+icon: 'sliders'
+---
+
+## Overview
+
+Each ClawControl deployment is configured using a `config.json` file stored in `~/.clawcontrol/deployments/<deployment-name>/`. This file defines your cloud provider settings, OpenClaw configuration, and agent settings.
+
+## Configuration Schema
+
+The deployment configuration follows the `DeploymentConfigSchema` defined in `src/types/index.ts:167`.
+
+### Core Fields
+
+<ParamField path="name" type="string" required>
+  Unique identifier for the deployment. Must be lowercase letters, numbers, and hyphens only. Must start and end with a letter or number. Maximum 63 characters (RFC 1123 hostname format).
+</ParamField>
+
+<ParamField path="provider" type="enum" required>
+  Cloud provider to use for deployment.
+  
+  **Options:** `hetzner`, `digitalocean`, `vultr`
+</ParamField>
+
+<ParamField path="createdAt" type="string" required>
+  ISO 8601 timestamp of when the deployment was created.
+</ParamField>
+
+<ParamField path="skipTailscale" type="boolean">
+  Whether to skip Tailscale installation and configuration. Set to `true` to deploy without Tailscale VPN.
+  
+  **Default:** `false`
+</ParamField>
+
+### Provider-Specific Configuration
+
+<ParamField path="hetzner" type="object">
+  Hetzner-specific configuration. Required when `provider` is `hetzner`.
+  
+  <Expandable title="properties">
+    <ParamField path="hetzner.apiKey" type="string" required>
+      Hetzner Cloud API key for authentication.
+    </ParamField>
+    
+    <ParamField path="hetzner.serverType" type="string">
+      Server type/size to provision.
+      
+      **Default:** `cpx11` (2 vCPU, 2 GB RAM)
+    </ParamField>
+    
+    <ParamField path="hetzner.location" type="string">
+      Datacenter location code.
+      
+      **Default:** `ash` (Ashburn, VA)
+    </ParamField>
+    
+    <ParamField path="hetzner.image" type="string">
+      Operating system image.
+      
+      **Default:** `ubuntu-24.04`
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="digitalocean" type="object">
+  DigitalOcean-specific configuration. Required when `provider` is `digitalocean`.
+  
+  <Expandable title="properties">
+    <ParamField path="digitalocean.apiKey" type="string" required>
+      DigitalOcean API token for authentication.
+    </ParamField>
+    
+    <ParamField path="digitalocean.size" type="string">
+      Droplet size slug.
+      
+      **Default:** `s-1vcpu-2gb`
+    </ParamField>
+    
+    <ParamField path="digitalocean.region" type="string">
+      Datacenter region slug.
+      
+      **Default:** `nyc1`
+    </ParamField>
+    
+    <ParamField path="digitalocean.image" type="string">
+      Operating system image slug.
+      
+      **Default:** `ubuntu-24-04-x64`
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### OpenClaw Configuration
+
+<ParamField path="openclawConfig" type="object">
+  Optional configuration overrides for OpenClaw gateway and browser settings. See [OpenClaw Configuration](/configuration/openclaw-config) for details.
+</ParamField>
+
+<ParamField path="openclawAgent" type="object">
+  AI agent and channel configuration. See [OpenClaw Configuration](/configuration/openclaw-config#agent-configuration) for details.
+</ParamField>
+
+## Storage Location
+
+Configuration files are stored at:
+
+```
+~/.clawcontrol/deployments/<deployment-name>/config.json
+```
+
+The directory structure is managed by `src/services/config.ts:12-13`:
+
+```typescript
+const CLAWCONTROL_DIR = join(homedir(), ".clawcontrol");
+const DEPLOYMENTS_DIR = join(CLAWCONTROL_DIR, "deployments");
+```
+
+## Example Configuration
+
+### Hetzner Deployment
+
+```json
+{
+  "name": "my-openclaw-server",
+  "provider": "hetzner",
+  "createdAt": "2026-02-28T10:30:00.000Z",
+  "hetzner": {
+    "apiKey": "your-hetzner-api-key",
+    "serverType": "cpx11",
+    "location": "ash",
+    "image": "ubuntu-24.04"
+  },
+  "openclawConfig": {
+    "gateway": {
+      "port": 18789,
+      "mode": "local",
+      "bind": "loopback"
+    },
+    "browser": {
+      "headless": true,
+      "defaultProfile": "openclaw"
+    }
+  },
+  "openclawAgent": {
+    "aiProvider": "openrouter",
+    "aiApiKey": "sk-or-v1-...",
+    "model": "anthropic/claude-3.5-sonnet",
+    "channel": "telegram",
+    "telegramBotToken": "1234567890:ABCdef...",
+    "telegramAllowFrom": "@yourusername"
+  },
+  "skipTailscale": false
+}
+```
+
+### DigitalOcean Deployment
+
+```json
+{
+  "name": "production-agent",
+  "provider": "digitalocean",
+  "createdAt": "2026-02-28T14:15:00.000Z",
+  "digitalocean": {
+    "apiKey": "dop_v1_...",
+    "size": "s-2vcpu-4gb",
+    "region": "sfo3",
+    "image": "ubuntu-24-04-x64"
+  },
+  "openclawAgent": {
+    "aiProvider": "anthropic",
+    "aiApiKey": "sk-ant-...",
+    "model": "claude-3.5-sonnet-20241022",
+    "channel": "telegram",
+    "telegramBotToken": "9876543210:XYZabc..."
+  }
+}
+```
+
+## Related Files
+
+- **Type Definition:** `src/types/index.ts:167` - `DeploymentConfigSchema`
+- **Config Service:** `src/services/config.ts` - Configuration management functions
+- **Validation:** `src/services/config.ts:227` - `validateDeploymentName()`

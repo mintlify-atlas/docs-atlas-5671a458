@@ -1,0 +1,482 @@
+---
+title: 'Managing Deployments'
+description: 'View, edit, fork, and delete your ClawControl deployments'
+---
+
+Once you've created deployments, ClawControl provides tools to manage them throughout their lifecycle.
+
+## Viewing All Deployments
+
+<Steps>
+  <Step title="List deployments">
+    From the main menu:
+    
+    ```bash
+    /list
+    ```
+    
+    You'll see all your deployments:
+    
+    ```
+    /list - Deployments (3)
+    
+    > my-openclaw-server     [deployed]      Hetzner Cloud
+      dev-server             [initialized]   DigitalOcean
+      old-server             [failed]        Hetzner Cloud
+    ```
+    
+    Status meanings:
+    - **initialized**: Configuration created, not yet deployed
+    - **provisioning**: Server is being created
+    - **configuring**: Software is being installed
+    - **deployed**: Fully operational
+    - **failed**: Deployment encountered an error
+  </Step>
+
+  <Step title="View deployment details">
+    Press Enter on any deployment to see full details:
+    
+    ```
+    /list - my-openclaw-server
+    
+    Deployment Details
+    
+    Name:         my-openclaw-server
+    Status:       deployed
+    Provider:     Hetzner Cloud
+    Created:      1/15/2026, 2:30:45 PM
+    Server IP:    159.89.123.45
+    Server Type:  cpx11
+    AI Provider:  openrouter
+    Model:        moonshotai/kimi-k2.5
+    Channel:      telegram
+    
+    [E]dit  [F]ork  [D]elete (use /destroy)
+    
+    Esc: Back to list
+    ```
+  </Step>
+</Steps>
+
+## Checking Deployment Status
+
+<Steps>
+  <Step title="Open status view">
+    ```bash
+    /status
+    ```
+    
+    This shows all deployments with detailed status information:
+    
+    ```
+    /status - Deployment Status
+    
+    Deployments (2)
+    > my-openclaw-server     [deployed]
+      dev-server             [initialized]
+    ```
+  </Step>
+
+  <Step title="Select a deployment">
+    Use arrow keys to select a deployment:
+    
+    ```
+    Details: my-openclaw-server
+    
+    Status:         deployed
+    Provider:       hetzner
+    Server IP:      159.89.123.45
+    Tailscale IP:   100.64.1.23
+    Created:        1/15/2026, 2:30:45 PM
+    Deployed:       1/15/2026, 2:45:12 PM
+    ```
+  </Step>
+
+  <Step title="Run health check">
+    Press Enter to check if the deployment is healthy:
+    
+    ```
+    Health Check:
+    SSH:        Connected
+    OpenClaw:   Running
+    Last checked: 3:45:12 PM
+    ```
+    
+    This verifies:
+    - SSH connection is working
+    - OpenClaw daemon is running
+    - Server is responsive
+  </Step>
+</Steps>
+
+## Editing Deployments
+
+You can edit deployments that haven't been deployed yet (status: `initialized`).
+
+<Steps>
+  <Step title="Select deployment">
+    Go to `/list`, select an initialized deployment, and press `E` for edit:
+    
+    ```
+    [E]dit  [F]ork  [D]elete
+    ```
+    
+    <Warning>
+      You can only edit deployments with status "initialized". Deployed servers must be destroyed and recreated to change settings.
+    </Warning>
+  </Step>
+
+  <Step title="Update settings">
+    The edit wizard lets you change:
+    
+    - Cloud provider API key
+    - Server size (DigitalOcean only)
+    - AI provider and API key
+    - Model
+    - Telegram bot token
+    - Telegram allowed users
+    
+    Settings you CANNOT change:
+    - Deployment name
+    - Cloud provider
+    - AI provider
+    
+    To change these, fork the deployment instead.
+  </Step>
+
+  <Step title="Save changes">
+    After making changes, confirm to update the deployment:
+    
+    ```
+    Configuration Summary:
+    
+    Name:         dev-server
+    Provider:     DigitalOcean
+    AI Provider:  OpenAI
+    Model:        gpt-4o-mini
+    
+    Press Y to confirm, N to go back
+    ```
+    
+    The deployment configuration is updated immediately.
+  </Step>
+</Steps>
+
+## Forking Deployments
+
+Forking creates a copy of an existing deployment with a new name. This is useful for:
+
+- Creating multiple similar deployments
+- Testing configuration changes
+- Migrating between providers
+
+<Steps>
+  <Step title="Start fork">
+    From `/list`, select any deployment and press `F`:
+    
+    ```
+    [E]dit  [F]ork  [D]elete
+    ```
+    
+    <Tip>
+      You can fork any deployment, regardless of status (initialized, deployed, or failed).
+    </Tip>
+  </Step>
+
+  <Step title="Name the fork">
+    Choose a unique name for the forked deployment:
+    
+    ```
+    Step 1: Deployment Name
+    Enter a unique name for this deployment:
+    
+    Name: my-openclaw-server-2
+    ```
+  </Step>
+
+  <Step title="Customize settings">
+    The fork wizard walks through each setting, pre-filled with values from the original:
+    
+    - Cloud provider API key
+    - Server size (if DigitalOcean)
+    - AI provider API key
+    - Model
+    - Telegram credentials
+    - Tailscale preference
+    
+    You can keep the same values or change them.
+  </Step>
+
+  <Step title="Create fork">
+    Confirm to create the forked deployment:
+    
+    ```
+    Configuration Summary:
+    
+    Name:         my-openclaw-server-2
+    Provider:     Hetzner Cloud
+    AI Provider:  OpenRouter
+    Model:        moonshotai/kimi-k2.5
+    
+    Press Y to confirm, N to go back
+    ```
+    
+    The new deployment is created with status "initialized".
+  </Step>
+</Steps>
+
+## Deleting Local Configurations
+
+Delete deployments that haven't been deployed yet:
+
+<Steps>
+  <Step title="Select initialized deployment">
+    From `/list`, select a deployment with status "initialized" and press `D`:
+    
+    ```
+    [E]dit  [F]ork  [D]elete
+    ```
+    
+    <Warning>
+      If a deployment is deployed or failed, use `/destroy` instead. The [D]elete option won't work.
+    </Warning>
+  </Step>
+
+  <Step title="Confirm deletion">
+    Type the deployment name to confirm:
+    
+    ```
+    Confirm Deletion
+    
+    You are about to delete:
+    Deployment: dev-server
+    
+    This will permanently delete:
+      Local configuration files
+      SSH keys
+    
+    Type the deployment name to confirm:
+    
+    Confirm: dev-server
+    ```
+  </Step>
+
+  <Step title="Deletion complete">
+    The deployment is removed from your local configuration:
+    
+    ```
+    Deployment Deleted
+    
+    The deployment "dev-server" has been permanently deleted.
+    ```
+  </Step>
+</Steps>
+
+## Deployment States
+
+Understanding deployment states helps you manage them effectively:
+
+### Initialized
+
+```yaml
+Status: initialized
+Server: Not created
+Actions: Edit, Deploy, Fork, Delete
+```
+
+Configuration exists locally but no cloud resources have been created.
+
+**What you can do:**
+- Edit configuration
+- Deploy to cloud
+- Fork to create copy
+- Delete locally
+
+### Provisioning
+
+```yaml
+Status: provisioning
+Server: Being created
+Actions: Monitor progress
+```
+
+Cloud server is being created. ClawControl is:
+- Creating VPS instance
+- Uploading SSH keys
+- Waiting for server to boot
+
+**What you can do:**
+- Watch deployment progress
+- Wait for completion
+
+### Configuring
+
+```yaml
+Status: configuring
+Server: Installing software
+Actions: Monitor progress
+```
+
+Server is created and ClawControl is:
+- Installing system updates
+- Installing Node.js, Chrome
+- Installing and configuring OpenClaw
+- Setting up Tailscale (if enabled)
+
+**What you can do:**
+- Watch deployment progress
+- Wait for completion
+
+### Deployed
+
+```yaml
+Status: deployed
+Server: Fully operational
+Actions: SSH, Logs, Status, Fork, Destroy
+```
+
+Deployment is complete and OpenClaw is running.
+
+**What you can do:**
+- SSH into server
+- View logs
+- Check health status
+- Fork for similar deployment
+- Destroy when done
+
+### Failed
+
+```yaml
+Status: failed
+Server: Deployment error
+Actions: View logs, Retry, Destroy
+```
+
+Deployment encountered an error and stopped.
+
+**What you can do:**
+- Check error message in status
+- Run `/deploy` to retry (resumes from last checkpoint)
+- Run `/logs` to diagnose
+- Run `/destroy` to clean up and start over
+
+## Finding Deployments
+
+As you create more deployments, use these strategies to stay organized:
+
+### Naming Conventions
+
+```
+Good examples:
+- prod-telegram-bot
+- dev-testing-server
+- personal-assistant-1
+- team-demo-instance
+
+Bad examples:
+- server
+- test
+- asdf
+- openclaw-1
+```
+
+### Status Filtering
+
+In `/list` and `/status`, deployments are shown with their status. Use this to quickly identify:
+
+- Active deployments: `[deployed]`
+- Ready to deploy: `[initialized]`
+- Need attention: `[failed]`
+
+### Multiple Deployments
+
+<Tip>
+  Common patterns:
+  - **Development + Production**: `dev-server` and `prod-server`
+  - **Multiple models**: `server-gpt4` and `server-claude`
+  - **Regional**: `server-us` and `server-eu`
+  - **Testing**: `test-new-model` (temporary)
+</Tip>
+
+## Managing SSH Keys
+
+ClawControl generates unique SSH keys for each deployment:
+
+```
+~/.clawcontrol/
+├── deployments/
+│   └── my-openclaw-server/
+│       ├── ssh/
+│       │   ├── id_ed25519          # Private key
+│       │   └── id_ed25519.pub      # Public key
+│       ├── config.json             # Deployment config
+│       └── state.json              # Deployment state
+```
+
+**SSH keys are:**
+- Automatically generated during deployment
+- Unique to each deployment
+- Deleted when you destroy a deployment
+- Not reused across deployments
+
+<Warning>
+  If you manually delete deployment files, you'll lose access to the server. Always use `/destroy` to clean up properly.
+</Warning>
+
+## Configuration Files
+
+Deployment data is stored locally:
+
+### config.json
+
+Stores your deployment configuration:
+
+```json
+{
+  "name": "my-openclaw-server",
+  "provider": "hetzner",
+  "createdAt": "2026-01-15T14:30:45.123Z",
+  "hetzner": {
+    "apiKey": "...",
+    "serverType": "cpx11",
+    "location": "ash",
+    "image": "ubuntu-24.04"
+  },
+  "openclawAgent": {
+    "aiProvider": "openrouter",
+    "aiApiKey": "...",
+    "model": "moonshotai/kimi-k2.5",
+    "channel": "telegram",
+    "telegramBotToken": "...",
+    "telegramAllowFrom": "123456789"
+  }
+}
+```
+
+### state.json
+
+Tracks deployment progress:
+
+```json
+{
+  "status": "deployed",
+  "serverId": "12345678",
+  "serverIp": "159.89.123.45",
+  "tailscaleIp": "100.64.1.23",
+  "deployedAt": "2026-01-15T14:45:12.456Z",
+  "checkpoints": [
+    {
+      "name": "server_created",
+      "completedAt": "2026-01-15T14:31:23.789Z",
+      "retryCount": 0
+    },
+    ...
+  ]
+}
+```
+
+## Next Steps
+
+- [Destroying Deployments](/guides/destroying-deployments) - Clean up cloud resources
+- [SSH Access](/guides/ssh-access) - Connect to your servers
+- [Monitoring Logs](/guides/monitoring-logs) - View OpenClaw logs

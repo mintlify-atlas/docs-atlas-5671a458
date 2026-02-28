@@ -1,0 +1,253 @@
+---
+title: 'OpenClaw Configuration'
+description: 'Configure OpenClaw gateway, browser, and agent settings'
+icon: 'gear'
+---
+
+## Overview
+
+ClawControl provides optional configuration overrides for OpenClaw's gateway and browser behavior. These settings are defined in your deployment's `config.json` and override OpenClaw's default configuration.
+
+The configuration is applied during deployment in `src/services/setup/index.ts:240`.
+
+## Gateway Configuration
+
+Customize the OpenClaw gateway settings that control how you access the web dashboard.
+
+<ParamField path="openclawConfig.gateway" type="object">
+  Gateway server configuration.
+  
+  <Expandable title="properties">
+    <ParamField path="openclawConfig.gateway.port" type="number">
+      Port number for the gateway HTTP server.
+      
+      **Default:** `18789`
+    </ParamField>
+    
+    <ParamField path="openclawConfig.gateway.mode" type="string">
+      Gateway operation mode.
+      
+      **Default:** `local`
+    </ParamField>
+    
+    <ParamField path="openclawConfig.gateway.bind" type="string">
+      Network binding mode. Use `loopback` for localhost-only access (recommended with Tailscale).
+      
+      **Default:** `loopback`
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Gateway Authentication
+
+ClawControl automatically generates a secure authentication token for your gateway during deployment. This token is:
+
+- Generated in `src/services/deployment.ts:670` using 32 random bytes
+- Stored in the deployment state at `~/.clawcontrol/deployments/<name>/state.json`
+- Written to OpenClaw's config as `gateway.auth.token`
+- Required to access the web dashboard
+
+The gateway URL with authentication token is displayed after successful deployment.
+
+### Tailscale Integration
+
+When Tailscale is enabled (default), ClawControl configures:
+
+```json
+{
+  "gateway": {
+    "tailscale": {
+      "mode": "serve",
+      "resetOnExit": false
+    }
+  }
+}
+```
+
+This enables secure access to your OpenClaw gateway over your private Tailscale network. See `src/services/setup/index.ts:271-274`.
+
+## Browser Configuration
+
+Configure the browser automation settings used by OpenClaw agents.
+
+<ParamField path="openclawConfig.browser" type="object">
+  Browser automation configuration.
+  
+  <Expandable title="properties">
+    <ParamField path="openclawConfig.browser.headless" type="boolean">
+      Run browser in headless mode (without visible UI).
+      
+      **Default:** `true`
+    </ParamField>
+    
+    <ParamField path="openclawConfig.browser.defaultProfile" type="string">
+      Default browser profile to use for agent sessions.
+      
+      **Default:** `openclaw`
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Default Browser Settings
+
+ClawControl sets the following browser defaults (see `src/services/setup/index.ts:251-263`):
+
+```json
+{
+  "browser": {
+    "enabled": true,
+    "remoteCdpTimeoutMs": 15000,
+    "remoteCdpHandshakeTimeoutMs": 3000,
+    "defaultProfile": "openclaw",
+    "color": "#FF4500",
+    "headless": true,
+    "noSandbox": true,
+    "attachOnly": false,
+    "executablePath": "/usr/bin/google-chrome",
+    "profiles": {
+      "openclaw": {
+        "cdpPort": 18800,
+        "color": "#FF4500"
+      }
+    }
+  }
+}
+```
+
+Your custom `browser` settings override these defaults.
+
+## Agent Configuration
+
+Configure the AI provider, model, and communication channel for your OpenClaw agent.
+
+<ParamField path="openclawAgent" type="object">
+  AI agent and channel configuration.
+  
+  <Expandable title="properties">
+    <ParamField path="openclawAgent.aiProvider" type="string" required>
+      AI provider identifier (e.g., `openrouter`, `anthropic`, `openai`).
+    </ParamField>
+    
+    <ParamField path="openclawAgent.aiApiKey" type="string" required>
+      API key for the AI provider. Can reference a saved secret.
+    </ParamField>
+    
+    <ParamField path="openclawAgent.model" type="string" required>
+      Model identifier. For OpenRouter, use the format `provider/model` (e.g., `anthropic/claude-3.5-sonnet`).
+      
+      For direct providers like Anthropic, use the model version (e.g., `claude-3.5-sonnet-20241022`).
+    </ParamField>
+    
+    <ParamField path="openclawAgent.channel" type="string">
+      Communication channel for the agent.
+      
+      **Default:** `telegram`
+    </ParamField>
+    
+    <ParamField path="openclawAgent.telegramBotToken" type="string" required>
+      Telegram Bot API token. Required when `channel` is `telegram`. Can reference a saved secret.
+    </ParamField>
+    
+    <ParamField path="openclawAgent.telegramAllowFrom" type="string">
+      Telegram user ID or @username for access control. If specified, only this user can interact with the bot.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### How Agent Config is Applied
+
+ClawControl transforms your agent config into OpenClaw's internal format (see `src/services/setup/index.ts:287-318`):
+
+1. **Model Configuration**: Combines `aiProvider` and `model` into a model key
+2. **Auth Profile**: Creates an API key authentication profile for the provider
+3. **Channel Setup**: Configures Telegram with bot token and access control
+
+## Example Configurations
+
+### Minimal Configuration
+
+Use all defaults, only specify agent settings:
+
+```json
+{
+  "name": "simple-agent",
+  "provider": "hetzner",
+  "hetzner": { "apiKey": "..." },
+  "openclawAgent": {
+    "aiProvider": "anthropic",
+    "aiApiKey": "sk-ant-...",
+    "model": "claude-3.5-sonnet-20241022",
+    "channel": "telegram",
+    "telegramBotToken": "1234:ABC..."
+  }
+}
+```
+
+### Custom Gateway Port
+
+Change the gateway port from default 18789:
+
+```json
+{
+  "openclawConfig": {
+    "gateway": {
+      "port": 8080
+    }
+  }
+}
+```
+
+### Non-Headless Browser
+
+Enable visible browser UI (useful for debugging):
+
+```json
+{
+  "openclawConfig": {
+    "browser": {
+      "headless": false
+    }
+  }
+}
+```
+
+### OpenRouter with Multiple Models
+
+Use OpenRouter as a gateway to multiple AI providers:
+
+```json
+{
+  "openclawAgent": {
+    "aiProvider": "openrouter",
+    "aiApiKey": "sk-or-v1-...",
+    "model": "anthropic/claude-3.5-sonnet",
+    "channel": "telegram",
+    "telegramBotToken": "..."
+  }
+}
+```
+
+### Telegram Access Control
+
+Restrict bot access to a specific user:
+
+```json
+{
+  "openclawAgent": {
+    "aiProvider": "anthropic",
+    "aiApiKey": "sk-ant-...",
+    "model": "claude-3.5-sonnet-20241022",
+    "channel": "telegram",
+    "telegramBotToken": "...",
+    "telegramAllowFrom": "@yourusername"
+  }
+}
+```
+
+## Schema Reference
+
+**OpenClawConfigSchema:** `src/types/index.ts:134-150`
+
+**OpenClawAgentConfigSchema:** `src/types/index.ts:155-164`
+
+**Configuration Implementation:** `src/services/setup/index.ts:240-284`

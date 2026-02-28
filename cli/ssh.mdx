@@ -1,0 +1,316 @@
+---
+title: /ssh
+description: SSH into a deployed instance
+---
+
+The `/ssh` command opens an interactive SSH session to a deployed OpenClaw instance. It launches your system's default terminal application with the SSH connection pre-configured.
+
+## Usage
+
+```
+/ssh
+```
+
+## SSH Connection Process
+
+### 1. Select Deployment
+
+Choose which deployment to connect to:
+
+```
+/ssh - Select a deployment to connect
+
+┌────────────────────────────────────────────┐
+│ > production-claude    203.0.113.45        │
+│   staging-test        198.51.100.23        │
+└────────────────────────────────────────────┘
+
+Terminal: iTerm2 (will open in a new window)
+
+Arrow keys to select | Enter to connect | Esc to go back
+```
+
+<Note>
+  Only successfully deployed instances with a server IP appear in the list.
+</Note>
+
+### 2. Connection Opens
+
+Press Enter and a new terminal window opens:
+
+```
+SSH Session Opened
+
+A new iTerm2 window/tab has been opened.
+
+Your SSH session is running in iTerm2.
+When you're done, type 'exit' or close the tab.
+
+Press Enter or Esc to return to ClawControl
+```
+
+### 3. Interactive Session
+
+In the new terminal window:
+
+```bash
+root@production-claude:~# 
+
+# You now have full root access to your server
+root@production-claude:~# openclaw status
+OpenClaw Status:
+  Service:  Active (running)
+  Uptime:   2 days, 5 hours
+  PID:      1234
+
+root@production-claude:~# journalctl -u openclaw -f
+# View live logs
+
+root@production-claude:~# exit
+logout
+Connection to 203.0.113.45 closed.
+```
+
+## Supported Terminals
+
+ClawControl automatically detects and supports these terminal applications:
+
+### macOS
+- **iTerm2** - Recommended
+- **Terminal.app** - Built-in
+- **Warp** - Modern terminal
+- **Kitty** - GPU-accelerated
+- **Alacritty** - Fast, minimal
+
+### Linux
+- **GNOME Terminal** - Default on Ubuntu/Fedora
+- **Konsole** - KDE default
+- **xterm** - Universal fallback
+- **kitty** - GPU-accelerated
+- **Alacritty** - Fast, minimal
+
+### Windows (WSL)
+- **Windows Terminal** - Recommended
+- **ConEmu**
+- **Cmder**
+
+## SSH Configuration
+
+### Automatic Key Management
+
+ClawControl automatically:
+- Generates unique SSH keys for each deployment
+- Stores keys in `~/.clawcontrol/deployments/{name}/ssh_key.pem`
+- Uploads public keys to the cloud provider
+- Configures proper permissions (0600)
+
+### Manual SSH
+
+You can also SSH manually:
+
+```bash
+ssh -i ~/.clawcontrol/deployments/production-claude/ssh_key.pem \
+    -o StrictHostKeyChecking=no \
+    -o UserKnownHostsFile=/dev/null \
+    root@203.0.113.45
+```
+
+## Common SSH Tasks
+
+### Check OpenClaw Status
+
+```bash
+root@server:~# systemctl status openclaw
+● openclaw.service - OpenClaw Agent
+   Loaded: loaded (/etc/systemd/system/openclaw.service; enabled)
+   Active: active (running) since Fri 2026-02-28 10:45:00 UTC
+   Main PID: 1234 (node)
+```
+
+### View Logs
+
+```bash
+root@server:~# journalctl -u openclaw -n 100
+# Last 100 lines
+
+root@server:~# journalctl -u openclaw -f
+# Follow logs in real-time
+```
+
+### Restart Service
+
+```bash
+root@server:~# systemctl restart openclaw
+root@server:~# systemctl status openclaw
+```
+
+### Check Tailscale
+
+```bash
+root@server:~# tailscale status
+100.64.0.12  server-name          user@        linux   -
+```
+
+### Update OpenClaw
+
+```bash
+root@server:~# npm install -g @openclaw/core@latest
+root@server:~# systemctl restart openclaw
+```
+
+### View System Resources
+
+```bash
+root@server:~# htop
+root@server:~# df -h
+root@server:~# free -h
+```
+
+## Example Terminal Session
+
+```
+> /ssh
+
+/ssh - Select a deployment to connect
+
+┌────────────────────────────────────────────┐
+│ > production-claude    203.0.113.45        │
+└────────────────────────────────────────────┘
+
+[Enter]
+
+✓ SSH Session Opened
+
+A new iTerm2 window/tab has been opened.
+
+[In new terminal window]
+
+Welcome to Ubuntu 24.04 LTS
+
+root@production-claude:~# openclaw status
+OpenClaw Agent: Running
+Uptime: 5 hours, 23 minutes
+
+root@production-claude:~# exit
+logout
+```
+
+## Keyboard Navigation
+
+- **↑/↓** - Navigate between deployments
+- **Enter** - Open SSH connection
+- **Esc** - Return to home
+
+## Empty State
+
+If no deployed instances exist:
+
+```
+/ssh - SSH into deployment
+
+┌────────────────────────────────────────────┐
+│ No deployed instances found!               │
+│ Deploy an instance first with /deploy      │
+└────────────────────────────────────────────┘
+
+Press any key to return to home
+```
+
+## Error Handling
+
+### Terminal Not Found
+
+```
+SSH Error
+
+Could not detect a supported terminal application.
+
+Please install iTerm2 (macOS) or GNOME Terminal (Linux).
+```
+
+### Connection Failed
+
+```bash
+root@server:~# ssh -i key.pem root@203.0.113.45
+ssh: connect to host 203.0.113.45 port 22: Connection refused
+```
+
+**Solutions:**
+1. Check server is running: `/status`
+2. Verify server IP is correct
+3. Ensure SSH port 22 is open
+4. Try redeploying: `/deploy`
+
+## Security Notes
+
+<Warning>
+  SSH connections use root access. Exercise caution when modifying system files or configurations.
+</Warning>
+
+- Each deployment has a unique SSH key
+- Keys are generated with 4096-bit RSA encryption
+- Private keys never leave your machine
+- Keys are stored with 0600 permissions
+
+## Tips
+
+<Tip>
+  Keep the SSH window open while using `/logs` or `/dashboard` commands. This allows you to quickly reference the server state while monitoring.
+</Tip>
+
+<Tip>
+  Use `tmux` or `screen` on the server to create persistent sessions that survive SSH disconnections.
+</Tip>
+
+## Advanced Usage
+
+### Port Forwarding
+
+```bash
+ssh -i ~/.clawcontrol/deployments/production/ssh_key.pem \
+    -L 8080:localhost:18789 \
+    root@203.0.113.45
+```
+
+Access OpenClaw gateway at `http://localhost:8080`
+
+### File Transfer (SCP)
+
+```bash
+# Upload file
+scp -i ~/.clawcontrol/deployments/production/ssh_key.pem \
+    local-file.txt root@203.0.113.45:/root/
+
+# Download file
+scp -i ~/.clawcontrol/deployments/production/ssh_key.pem \
+    root@203.0.113.45:/var/log/openclaw.log .
+```
+
+### Using SFTP
+
+```bash
+sftp -i ~/.clawcontrol/deployments/production/ssh_key.pem \
+     root@203.0.113.45
+
+sftp> ls
+sftp> get remote-file.txt
+sftp> put local-file.txt
+sftp> exit
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Logs Command" icon="file-lines" href="/cli/logs">
+    View application logs
+  </Card>
+  <Card title="Status Command" icon="chart-line" href="/cli/status">
+    Check deployment health
+  </Card>
+  <Card title="Dashboard Command" icon="browser" href="/cli/dashboard">
+    Open web interface
+  </Card>
+  <Card title="Destroy Command" icon="trash" href="/cli/destroy">
+    Clean up deployments
+  </Card>
+</CardGroup>

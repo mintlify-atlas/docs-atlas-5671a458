@@ -1,0 +1,409 @@
+---
+title: 'SSH Access'
+description: 'Connect to your OpenClaw servers via SSH'
+---
+
+ClawControl makes it easy to SSH into your deployed OpenClaw instances for debugging, configuration, and administration.
+
+## Understanding SSH Access
+
+When you deploy an OpenClaw instance, ClawControl:
+
+1. Generates a unique ED25519 SSH key pair
+2. Uploads the public key to your cloud provider
+3. Configures the server to accept your key
+4. Stores the private key locally at `~/.clawcontrol/deployments/NAME/ssh/id_ed25519`
+
+<Tip>
+  Each deployment has its own SSH key for security isolation. If one key is compromised, your other deployments remain secure.
+</Tip>
+
+## Quick SSH Access
+
+<Steps>
+  <Step title="Launch SSH">
+    From ClawControl's main menu:
+    
+    ```bash
+    /ssh
+    ```
+    
+    ClawControl detects your terminal and shows available deployments:
+    
+    ```
+    /ssh - Select a deployment to connect
+    
+    > my-openclaw-server     159.89.123.45
+      prod-server            142.93.45.67
+    
+    Terminal: iTerm2 (will open in a new window)
+    
+    Arrow keys to select | Enter to connect | Esc to go back
+    ```
+  </Step>
+
+  <Step title="Select deployment">
+    Use arrow keys to select a deployment and press Enter.
+    
+    ClawControl opens a new terminal window/tab with an active SSH session:
+    
+    ```bash
+    ssh -i ~/.clawcontrol/deployments/my-openclaw-server/ssh/id_ed25519 \
+      -o StrictHostKeyChecking=no \
+      -o UserKnownHostsFile=/dev/null \
+      root@159.89.123.45
+    ```
+    
+    <Tip>
+      ClawControl automatically handles SSH options to avoid fingerprint warnings.
+    </Tip>
+  </Step>
+
+  <Step title="Connected">
+    You're now connected to your server as root:
+    
+    ```bash
+    root@my-openclaw-server:~#
+    ```
+    
+    Back in ClawControl, you'll see a confirmation:
+    
+    ```
+    SSH Session Opened
+    A new iTerm2 window/tab has been opened.
+    
+    Your SSH session is running in iTerm2.
+    When you're done, type 'exit' or close the tab.
+    
+    Press Enter or Esc to return to ClawControl
+    ```
+  </Step>
+</Steps>
+
+## Supported Terminals
+
+ClawControl automatically detects and supports:
+
+- **macOS**: Terminal.app, iTerm2, Warp, Hyper, Alacritty, Kitty
+- **Linux**: gnome-terminal, konsole, xterm, xfce4-terminal, terminator
+- **Windows**: Windows Terminal, cmd.exe, PowerShell
+
+<Tip>
+  ClawControl picks the best terminal available on your system. Set the `TERMINAL` environment variable to override detection.
+</Tip>
+
+## Manual SSH Connection
+
+You can also connect manually without ClawControl:
+
+### Get Connection Details
+
+From `/status` or `/list`, note your deployment's:
+- Deployment name
+- Server IP address
+
+### Connect via Terminal
+
+```bash
+ssh -i ~/.clawcontrol/deployments/DEPLOYMENT_NAME/ssh/id_ed25519 \
+  root@SERVER_IP
+```
+
+Example:
+```bash
+ssh -i ~/.clawcontrol/deployments/my-openclaw-server/ssh/id_ed25519 \
+  root@159.89.123.45
+```
+
+### Add to SSH Config
+
+For frequent access, add to `~/.ssh/config`:
+
+```ssh-config
+Host my-openclaw
+    HostName 159.89.123.45
+    User root
+    IdentityFile ~/.clawcontrol/deployments/my-openclaw-server/ssh/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+```
+
+Then connect with:
+```bash
+ssh my-openclaw
+```
+
+## Common SSH Tasks
+
+### Check OpenClaw Status
+
+```bash
+systemctl status openclaw
+```
+
+Output:
+```
+● openclaw.service - OpenClaw Agent
+     Loaded: loaded (/etc/systemd/system/openclaw.service; enabled)
+     Active: active (running) since Wed 2026-01-15 14:45:23 UTC
+   Main PID: 1234 (node)
+      Tasks: 11 (limit: 2339)
+     Memory: 245.6M
+        CPU: 1min 23.456s
+```
+
+### View OpenClaw Logs
+
+```bash
+journalctl -u openclaw -f
+```
+
+This follows logs in real-time. Press Ctrl+C to stop.
+
+### Restart OpenClaw
+
+```bash
+systemctl restart openclaw
+```
+
+### Check System Resources
+
+```bash
+# CPU and memory usage
+htop
+
+# Disk space
+df -h
+
+# Memory info
+free -h
+```
+
+### Update OpenClaw
+
+```bash
+# Load NVM
+source ~/.nvm/nvm.sh
+
+# Update OpenClaw
+cd ~/.openclaw
+npm update -g @openclaw/core
+
+# Restart service
+systemctl restart openclaw
+```
+
+### Check Network Connectivity
+
+```bash
+# Test internet
+ping -c 3 8.8.8.8
+
+# Check open ports
+ss -tulpn | grep LISTEN
+
+# Test Tailscale (if configured)
+tailscale status
+```
+
+## Advanced SSH Usage
+
+### Port Forwarding
+
+Access the OpenClaw gateway through an SSH tunnel:
+
+```bash
+ssh -i ~/.clawcontrol/deployments/my-openclaw-server/ssh/id_ed25519 \
+  -L 8080:localhost:18789 \
+  root@159.89.123.45
+```
+
+Then visit `http://localhost:8080` in your browser.
+
+<Tip>
+  This is useful when Tailscale isn't configured and you don't want to expose the gateway publicly.
+</Tip>
+
+### Copy Files to Server
+
+```bash
+scp -i ~/.clawcontrol/deployments/my-openclaw-server/ssh/id_ed25519 \
+  local-file.json root@159.89.123.45:/root/
+```
+
+### Copy Files from Server
+
+```bash
+scp -i ~/.clawcontrol/deployments/my-openclaw-server/ssh/id_ed25519 \
+  root@159.89.123.45:/root/logs.txt .
+```
+
+### Run Remote Command
+
+Execute a command without interactive session:
+
+```bash
+ssh -i ~/.clawcontrol/deployments/my-openclaw-server/ssh/id_ed25519 \
+  root@159.89.123.45 "systemctl status openclaw"
+```
+
+## Troubleshooting SSH
+
+### Connection Timeout
+
+**Problem:** SSH connection times out
+
+**Solutions:**
+
+1. Verify server is running in your cloud provider's dashboard
+2. Check server IP address hasn't changed
+3. Verify firewall allows SSH (port 22)
+4. Try from `/status` to see if server is reachable
+
+### Permission Denied
+
+**Problem:** `Permission denied (publickey)`
+
+**Solutions:**
+
+1. Verify you're using the correct SSH key:
+   ```bash
+   ls -la ~/.clawcontrol/deployments/DEPLOYMENT_NAME/ssh/
+   ```
+
+2. Check key permissions:
+   ```bash
+   chmod 600 ~/.clawcontrol/deployments/DEPLOYMENT_NAME/ssh/id_ed25519
+   ```
+
+3. Ensure you're using the deployment name correctly
+
+### Host Key Verification Failed
+
+**Problem:** SSH warns about host key mismatch
+
+This happens if you destroyed and recreated a server with the same IP.
+
+**Solution:**
+```bash
+ssh-keygen -R SERVER_IP
+```
+
+Or use ClawControl's `/ssh` which bypasses known_hosts checking.
+
+### Terminal Doesn't Open
+
+**Problem:** ClawControl can't open terminal
+
+**Solutions:**
+
+1. Check error message for details
+2. Try manual SSH connection
+3. Set `TERMINAL` environment variable:
+   ```bash
+   export TERMINAL=gnome-terminal
+   clawcontrol
+   ```
+
+4. Use manual SSH as fallback
+
+## SSH Security
+
+### Key Management
+
+<Warning>
+  Never share your private SSH keys. They provide root access to your servers.
+</Warning>
+
+**Best practices:**
+
+- Keys are stored with restrictive permissions (600)
+- Each deployment has isolated keys
+- Keys are deleted when you run `/destroy`
+- Don't copy keys to insecure locations
+
+### Access Control
+
+By default, servers only accept:
+- SSH key authentication (no passwords)
+- Connections from ClawControl's generated key
+- Root user access
+
+### Firewall Configuration
+
+Cloud providers typically allow SSH by default. To restrict:
+
+**Hetzner:**
+1. Go to Cloud Console
+2. Select your server
+3. Firewalls → Create Firewall
+4. Allow SSH only from your IP
+
+**DigitalOcean:**
+1. Go to Networking → Firewalls
+2. Create Firewall
+3. Allow SSH only from your IP
+4. Apply to your droplet
+
+## SSH with Tailscale
+
+If you enabled Tailscale during deployment:
+
+### Connect via Tailscale IP
+
+```bash
+ssh -i ~/.clawcontrol/deployments/my-openclaw-server/ssh/id_ed25519 \
+  root@100.64.1.23
+```
+
+<Tip>
+  Tailscale IPs (100.x.x.x) are only accessible from devices on your Tailscale network, providing an extra security layer.
+</Tip>
+
+### Benefits
+
+- **Security**: Only accessible from your Tailscale network
+- **No public SSH**: Disable SSH on public IP
+- **NAT traversal**: Works behind firewalls
+- **Encrypted**: End-to-end encryption
+
+## VS Code Remote SSH
+
+Connect VS Code to your server:
+
+<Steps>
+  <Step title="Install Remote-SSH extension">
+    In VS Code, install the "Remote - SSH" extension.
+  </Step>
+
+  <Step title="Add SSH host">
+    Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Linux/Windows)
+    
+    Select: "Remote-SSH: Add New SSH Host"
+    
+    Enter:
+    ```bash
+    ssh -i ~/.clawcontrol/deployments/my-openclaw-server/ssh/id_ed25519 root@159.89.123.45
+    ```
+  </Step>
+
+  <Step title="Connect">
+    Press `Cmd+Shift+P` → "Remote-SSH: Connect to Host"
+    
+    Select your server.
+    
+    VS Code opens a new window connected to your server.
+  </Step>
+</Steps>
+
+Now you can:
+- Edit files directly on the server
+- Run terminal commands
+- Debug Node.js applications
+- Use VS Code extensions remotely
+
+## Next Steps
+
+- [Monitoring Logs](/guides/monitoring-logs) - View OpenClaw logs from ClawControl
+- [Destroying Deployments](/guides/destroying-deployments) - Clean up servers and SSH keys
+- [Configuration Reference](/configuration/deployment-config) - Advanced server configuration

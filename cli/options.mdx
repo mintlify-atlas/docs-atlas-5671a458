@@ -1,0 +1,454 @@
+---
+title: Global Options
+description: Command-line flags and configuration options
+---
+
+ClawControl supports several command-line flags for version information, help, and launching modes.
+
+## Command-Line Flags
+
+### Version
+
+Display the ClawControl version:
+
+```bash
+clawcontrol --version
+clawcontrol -v
+```
+
+**Output:**
+```
+clawcontrol v0.2.3
+```
+
+Use this to:
+- Verify installation
+- Check for updates
+- Report bugs (include version in issue reports)
+
+### Help
+
+Display command-line help:
+
+```bash
+clawcontrol --help
+clawcontrol -h
+```
+
+**Output:**
+```
+clawcontrol v0.2.3
+CLI tool for deploying and managing OpenClaw instances on VPS providers
+
+Usage:
+  clawcontrol            Launch the interactive TUI
+  clawcontrol --help     Show this help message
+  clawcontrol --version  Show the version number
+
+Options:
+  -h, --help     Show this help message
+  -v, --version  Show the version number
+
+Documentation & source:
+  https://github.com/ipenywis/clawcontrol
+```
+
+### Interactive TUI (Default)
+
+Launch the interactive text user interface:
+
+```bash
+clawcontrol
+```
+
+This is the default mode - you don't need any flags.
+
+## Launch Modes
+
+ClawControl has one primary mode:
+
+### Interactive TUI Mode (Default)
+
+```bash
+clawcontrol
+```
+
+**Features:**
+- Full-screen terminal interface
+- Command-based navigation
+- Real-time feedback
+- Keyboard-driven
+- Mouse support (scroll, select)
+
+**Requirements:**
+- Terminal with ANSI color support
+- Minimum 80x24 terminal size
+- True color support recommended
+
+## Configuration
+
+ClawControl stores configuration in:
+
+```bash
+~/.clawcontrol/
+├── deployments/          # Deployment configs
+│   ├── prod/
+│   │   ├── config.json
+│   │   ├── state.json
+│   │   └── ssh_key.pem
+│   └── staging/
+├── templates/            # Templates
+│   ├── my-template.json
+│   └── ...
+├── secrets/              # Saved API keys/tokens
+│   ├── hetzner_key1.json
+│   ├── anthropic_key1.json
+│   └── ...
+└── debug.log            # Debug log (if enabled)
+```
+
+### Configuration Files
+
+No global configuration file exists. All settings are per-deployment.
+
+### Environment Variables
+
+ClawControl doesn't currently use environment variables, but may in future versions for:
+
+- Default cloud provider
+- Default AI provider  
+- Debug logging
+- Custom config directory
+
+## Terminal Compatibility
+
+ClawControl works best with modern terminals:
+
+### Fully Supported
+
+**macOS:**
+- iTerm2 ✓
+- Warp ✓
+- Kitty ✓
+- Alacritty ✓
+- WezTerm ✓
+- Terminal.app (macOS 26+) ✓
+
+**Linux:**
+- GNOME Terminal ✓
+- Konsole ✓
+- Kitty ✓
+- Alacritty ✓
+- WezTerm ✓
+- Terminator ✓
+
+**Windows:**
+- Windows Terminal ✓
+- WSL2 + any Linux terminal ✓
+
+### Partial Support
+
+**macOS:**
+- Terminal.app (macOS 25 and earlier) - Colors may look wrong
+
+**Linux:**
+- xterm - Basic colors only
+- rxvt - Basic colors only
+
+### Not Supported
+
+- Windows Command Prompt (cmd.exe)
+- Windows PowerShell (non-Terminal)
+- Very old terminals without ANSI support
+
+<Note>
+  If you see a yellow warning bar about true color support, consider upgrading your terminal or using an alternative like iTerm2, Kitty, or Windows Terminal.
+</Note>
+
+## Color Support
+
+### True Color (24-bit)
+
+Recommended for best experience:
+
+```bash
+# Most modern terminals support this automatically
+clawcontrol
+```
+
+### Fallback Colors
+
+If your terminal doesn't support true color:
+
+```
+⚠ Your terminal does not support true color. Colors may look wrong.
+For full color support, use Ghostty, iTerm2, Kitty, or WezTerm — or
+upgrade to macOS 26+ for Terminal.app true color support.
+```
+
+ClawControl still works, but colors may appear different.
+
+## Mouse Support
+
+ClawControl supports mouse interactions:
+
+- **Click** - Select items in lists
+- **Scroll** - Scroll through logs and content
+- **Drag** - Select text for copying
+
+Keyboard navigation is still recommended for speed.
+
+## Text Selection and Copy
+
+Select text with mouse:
+
+1. Click and drag to select text
+2. Text is automatically copied to clipboard (via OSC 52)
+3. Paste anywhere (Cmd+V / Ctrl+V)
+
+<Tip>
+  ClawControl uses OSC 52 escape sequences to copy to clipboard. This works over SSH and in tmux/screen.
+</Tip>
+
+## Performance
+
+### System Requirements
+
+**Minimum:**
+- 512MB RAM
+- Any modern CPU
+- 50MB disk space
+
+**Recommended:**
+- 1GB RAM
+- Multi-core CPU
+- 100MB disk space
+
+### Network Requirements
+
+- Internet connection required
+- Outbound HTTPS (443) for API calls
+- Outbound SSH (22) for server access
+
+## Debug Mode
+
+ClawControl logs debug information to:
+
+```
+~/.clawcontrol/debug.log
+```
+
+View logs:
+
+```bash
+tail -f ~/.clawcontrol/debug.log
+```
+
+Logs include:
+- API requests/responses
+- SSH connection attempts
+- Deployment progress
+- Error details
+
+<Warning>
+  Debug logs may contain sensitive information (API keys, tokens). Don't share logs publicly without redacting secrets.
+</Warning>
+
+## Exit Codes
+
+ClawControl uses standard exit codes:
+
+- **0** - Success
+- **1** - General error
+- **2** - Configuration error
+
+Check exit code:
+
+```bash
+clawcontrol --version
+echo $?
+# Output: 0
+```
+
+## Updates
+
+Check for updates:
+
+```bash
+npm outdated -g clawcontrol
+```
+
+Update to latest:
+
+```bash
+npm install -g clawcontrol@latest
+```
+
+Verify update:
+
+```bash
+clawcontrol --version
+```
+
+## Uninstall
+
+Remove ClawControl:
+
+```bash
+npm uninstall -g clawcontrol
+```
+
+Remove configuration:
+
+```bash
+rm -rf ~/.clawcontrol/
+```
+
+<Warning>
+  Removing ~/.clawcontrol/ deletes all deployments, templates, and saved secrets. Back up first if needed.
+</Warning>
+
+## Node.js Requirements
+
+ClawControl requires Node.js 20.0.0 or higher:
+
+```bash
+node --version
+# Should be v20.0.0 or higher
+```
+
+Install Node.js:
+
+- **macOS**: `brew install node`
+- **Linux**: Use [nvm](https://github.com/nvm-sh/nvm) or package manager
+- **Windows**: Download from [nodejs.org](https://nodejs.org/)
+
+## Package Manager
+
+ClawControl is distributed via npm:
+
+```bash
+# Install
+npm install -g clawcontrol
+
+# Update  
+npm update -g clawcontrol
+
+# Uninstall
+npm uninstall -g clawcontrol
+```
+
+No other package managers (yarn, pnpm) are officially tested.
+
+## Example Usage
+
+### Basic Workflow
+
+```bash
+# Check version
+clawcontrol --version
+
+# Launch TUI
+clawcontrol
+
+# Inside TUI:
+> /new
+> /deploy
+> /status
+```
+
+### Quick Version Check
+
+```bash
+clawcontrol -v
+```
+
+### Get Help
+
+```bash
+# Command-line help
+clawcontrol --help
+
+# In-app help
+clawcontrol
+> /help
+```
+
+## Tips
+
+<Tip>
+  Add an alias to your shell profile for quick access:
+  ```bash
+  alias cc="clawcontrol"
+  ```
+  Then use: `cc` instead of `clawcontrol`
+</Tip>
+
+<Tip>
+  Use a terminal multiplexer (tmux/screen) to keep ClawControl running in the background while deployments complete.
+</Tip>
+
+## Troubleshooting
+
+### Command Not Found
+
+```bash
+clawcontrol: command not found
+```
+
+**Solution:**
+```bash
+npm install -g clawcontrol
+```
+
+### Permission Errors
+
+```bash
+ERROR: permission denied
+```
+
+**Solution:**
+```bash
+# Don't use sudo! Fix npm permissions:
+npm config set prefix ~/.npm-global
+export PATH=~/.npm-global/bin:$PATH
+npm install -g clawcontrol
+```
+
+### Old Node.js Version
+
+```bash
+ERROR: Node.js 20.0.0 or higher is required
+```
+
+**Solution:**
+```bash
+# Install latest Node.js
+nvm install 20
+nvm use 20
+```
+
+### Colors Look Wrong
+
+See yellow warning bar:
+
+**Solution:**
+- Use a modern terminal (iTerm2, Kitty, Windows Terminal)
+- Or upgrade to macOS 26+ for Terminal.app support
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Overview" icon="house" href="/cli/overview">
+    Back to CLI overview
+  </Card>
+  <Card title="Quick Start" icon="rocket" href="/cli/new">
+    Create your first deployment
+  </Card>
+  <Card title="Help Command" icon="circle-question" href="/cli/help">
+    In-app help reference
+  </Card>
+  <Card title="Templates" icon="layer-group" href="/cli/templates">
+    Reusable configurations
+  </Card>
+</CardGroup>

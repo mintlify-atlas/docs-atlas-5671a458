@@ -1,0 +1,245 @@
+---
+title: Deployments
+description: Understanding ClawControl deployments and their lifecycle
+---
+
+A **deployment** in ClawControl represents a complete OpenClaw instance running on a cloud VPS. Each deployment includes the server infrastructure, OpenClaw installation, and all configuration needed to run your AI agent.
+
+## What is a Deployment?
+
+A deployment is a managed OpenClaw instance that ClawControl creates and maintains on your chosen cloud provider. When you create a deployment, ClawControl:
+
+1. Provisions a VPS server on your chosen provider
+2. Configures the operating system and dependencies
+3. Installs and configures OpenClaw
+4. Sets up networking and security (SSH, Tailscale)
+5. Starts the OpenClaw daemon
+
+<Info>
+Each deployment is completely isolated with its own server, SSH keys, and configuration. You can run multiple deployments simultaneously.
+</Info>
+
+## Deployment Configuration
+
+Every deployment has a configuration file (`config.json`) that defines its settings:
+
+```typescript
+interface DeploymentConfig {
+  name: string;                    // Unique deployment name
+  provider: "hetzner" | "digitalocean" | "vultr";
+  createdAt: string;
+  hetzner?: HetznerConfig;         // Provider-specific config
+  digitalocean?: DigitalOceanConfig;
+  openclawConfig?: OpenClawConfig; // Custom OpenClaw settings
+  openclawAgent?: OpenClawAgentConfig; // AI provider & channel
+  skipTailscale?: boolean;         // Optional: skip Tailscale setup
+}
+```
+
+### Example Configuration
+
+```json
+{
+  "name": "my-agent",
+  "provider": "hetzner",
+  "createdAt": "2025-01-15T10:30:00.000Z",
+  "hetzner": {
+    "apiKey": "***",
+    "serverType": "cpx11",
+    "location": "ash",
+    "image": "ubuntu-24.04"
+  },
+  "openclawAgent": {
+    "aiProvider": "openrouter",
+    "aiApiKey": "***",
+    "model": "moonshotai/kimi-k2.5",
+    "channel": "telegram",
+    "telegramBotToken": "***"
+  }
+}
+```
+
+## Deployment State
+
+ClawControl tracks each deployment's state in a separate `state.json` file:
+
+```typescript
+interface DeploymentState {
+  status: DeploymentStatus;
+  serverId?: string;              // Provider's server ID
+  serverIp?: string;              // Public IP address
+  tailscaleIp?: string;           // Tailscale VPN IP
+  sshKeyId?: string;              // Provider's SSH key ID
+  sshKeyFingerprint?: string;
+  checkpoints: Checkpoint[];      // Recovery checkpoints
+  gatewayToken?: string;          // Dashboard auth token
+  lastError?: string;
+  deployedAt?: string;
+  updatedAt: string;
+}
+```
+
+### Deployment Status
+
+Deployments progress through these statuses:
+
+- **initialized** - Configuration created, ready to deploy
+- **provisioning** - Creating server resources
+- **configuring** - Installing and configuring software
+- **deployed** - Successfully running
+- **failed** - Deployment encountered an error
+- **updating** - Applying changes to existing deployment
+
+<Accordion title="View example state.json">
+```json
+{
+  "status": "deployed",
+  "serverId": "12345678",
+  "serverIp": "203.0.113.42",
+  "tailscaleIp": "100.64.1.5",
+  "sshKeyFingerprint": "SHA256:abc123...",
+  "checkpoints": [
+    {
+      "name": "server_created",
+      "completedAt": "2025-01-15T10:32:00.000Z",
+      "retryCount": 0
+    },
+    {
+      "name": "ssh_connected",
+      "completedAt": "2025-01-15T10:34:00.000Z",
+      "retryCount": 0
+    },
+    // ... more checkpoints
+    {
+      "name": "completed",
+      "completedAt": "2025-01-15T10:45:00.000Z",
+      "retryCount": 0
+    }
+  ],
+  "deployedAt": "2025-01-15T10:45:00.000Z",
+  "updatedAt": "2025-01-15T10:45:00.000Z"
+}
+```
+</Accordion>
+
+## Deployment Lifecycle
+
+A typical deployment goes through these phases:
+
+### 1. Creation
+
+Define your deployment configuration using a template or custom settings:
+
+```bash
+clawcontrol new
+```
+
+This creates a deployment directory at `~/.clawcontrol/deployments/<name>/` containing:
+- `config.json` - Your deployment configuration
+- `state.json` - Current deployment state
+- `ssh/` - SSH key pair for server access
+
+### 2. Deployment
+
+Execute the deployment to provision and configure your server:
+
+```bash
+clawcontrol deploy <name>
+```
+
+ClawControl uses a [checkpoint-based system](/concepts/checkpoints) to ensure reliable deployment with automatic recovery.
+
+### 3. Operation
+
+Once deployed, you can:
+- View status: `clawcontrol status <name>`
+- Access dashboard: `clawcontrol dashboard <name>`
+- SSH into server: `clawcontrol ssh <name>`
+- View logs: `clawcontrol logs <name>`
+
+### 4. Destruction
+
+When you're done, remove the deployment:
+
+```bash
+clawcontrol destroy <name>
+```
+
+This deletes the VPS server, removes cloud resources, and cleans up local configuration.
+
+## Storage Location
+
+All deployments are stored in `~/.clawcontrol/deployments/`:
+
+```
+~/.clawcontrol/
+└── deployments/
+    ├── my-agent/
+    │   ├── config.json    # Deployment configuration
+    │   ├── state.json     # Current state & checkpoints
+    │   └── ssh/
+    │       ├── id_ed25519     # Private SSH key
+    │       └── id_ed25519.pub # Public SSH key
+    └── another-agent/
+        ├── config.json
+        ├── state.json
+        └── ssh/
+```
+
+<Warning>
+SSH keys in the deployment directory provide root access to your servers. Keep the `~/.clawcontrol/` directory secure and never commit it to version control.
+</Warning>
+
+## Full Deployment Interface
+
+From the source code at `src/types/index.ts:204-208`:
+
+```typescript
+interface Deployment {
+  config: DeploymentConfig;
+  state: DeploymentState;
+  sshKeyPath: string;
+}
+```
+
+This combined interface represents everything ClawControl knows about a deployment, merging configuration with runtime state.
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Use descriptive names" icon="tag">
+    Choose deployment names that indicate their purpose, like `production-agent` or `dev-testing`.
+  </Card>
+  
+  <Card title="One deployment per purpose" icon="layer-group">
+    Keep production, development, and testing agents in separate deployments.
+  </Card>
+  
+  <Card title="Monitor deployment status" icon="chart-line">
+    Regularly check `clawcontrol status` to ensure your agents are running.
+  </Card>
+  
+  <Card title="Backup configurations" icon="floppy-disk">
+    Back up your `~/.clawcontrol/deployments/` directory to preserve settings and SSH keys.
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Templates" icon="file-code" href="/concepts/templates">
+    Learn how to use templates for faster deployment
+  </Card>
+  
+  <Card title="Checkpoints" icon="flag-checkered" href="/concepts/checkpoints">
+    Understand the checkpoint-based recovery system
+  </Card>
+  
+  <Card title="Deploy Command" icon="rocket" href="/cli/deploy">
+    See the complete deploy command reference
+  </Card>
+  
+  <Card title="Status Command" icon="info" href="/cli/status">
+    Check your deployment status
+  </Card>
+</CardGroup>

@@ -1,0 +1,536 @@
+---
+title: /templates
+description: Manage reusable deployment templates
+---
+
+The `/templates` command manages deployment templates - reusable configuration presets that simplify creating similar deployments. Templates store provider settings, AI configuration, and channel setup.
+
+## Usage
+
+```
+/templates
+```
+
+## Template Management
+
+### Template List
+
+View all available templates:
+
+```
+/templates - Manage deployment templates
+
+Select a template to view details. Use arrow keys and Enter.
+
+┌────────────────────────────────────────────────────┐
+│ > Blank configuration                              │
+│   Anthropic Claude (Telegram) [built-in] · telegram │
+│   OpenAI GPT-4 (Telegram) [built-in] · telegram    │
+│   My Production Setup [custom] · telegram          │
+└────────────────────────────────────────────────────┘
+
+Enter to view, Esc to go back
+```
+
+### Template Types
+
+- **[built-in]** - Pre-configured templates from ClawControl
+- **[custom]** - Templates you've created
+
+## Template Details
+
+Select a template to view its configuration:
+
+```
+Anthropic Claude (Telegram)
+
+Official Anthropic Claude template for Telegram
+
+┌────────────────────────────────────────────────────┐
+│ Type:          Built-in                            │
+│ Provider:      Hetzner Cloud                       │
+│ Server Type:   cpx11                               │
+│ Location:      ash                                 │
+│ AI Provider:   anthropic                           │
+│ Model:         claude-sonnet-4-20250514            │
+│ Channel:       telegram                            │
+└────────────────────────────────────────────────────┘
+
+[F]ork  [U]se  [Esc] Back
+```
+
+## Template Actions
+
+### Use Template (U)
+
+Press `U` to create a new deployment from this template:
+
+```
+# Navigates to /new with template pre-selected
+# Template values are pre-filled
+# You only need to provide:
+#   - Deployment name
+#   - API keys
+#   - Tokens/secrets
+```
+
+### Fork Template (F)
+
+Press `F` to create a custom template based on this one:
+
+```
+Fork Template - Name
+Enter a name for the new template:
+
+[Input] My Custom Claude Setup
+
+[Enter]
+
+Fork Template - Provider
+Select cloud provider:
+
+┌────────────────────────────────────────────┐
+│ > Hetzner Cloud - Recommended - US East    │
+│   DigitalOcean - NYC1 - New York           │
+└────────────────────────────────────────────┘
+
+# Continue through configuration steps
+# Similar to /new but creates a template instead
+```
+
+### Delete Template (D)
+
+Press `D` to delete a custom template (built-in templates cannot be deleted):
+
+```
+Delete Template
+
+Are you sure you want to delete "My Custom Template"?
+
+This action cannot be undone.
+
+Press Y to confirm, N to cancel
+```
+
+## Built-in Templates
+
+ClawControl includes these pre-configured templates:
+
+### Anthropic Claude (Telegram)
+
+```
+Provider:       Hetzner Cloud (CPX11, Ashburn)
+AI Provider:    Anthropic
+Model:          claude-sonnet-4-20250514
+Channel:        Telegram
+```
+
+Ideal for production use with Claude Sonnet 4.
+
+### OpenAI GPT-4 (Telegram)
+
+```
+Provider:       Hetzner Cloud (CPX11, Ashburn)
+AI Provider:    OpenAI
+Model:          gpt-4o
+Channel:        Telegram
+```
+
+Pre-configured for OpenAI's GPT-4o.
+
+## Creating Custom Templates
+
+Create templates by forking existing ones:
+
+### Method 1: Fork from /templates
+
+```
+> /templates
+# Select a template
+# Press F to fork
+# Customize settings
+# ✓ Template saved
+```
+
+### Method 2: Fork from Deployment
+
+From `/list`, fork an existing deployment into a template:
+
+```
+> /list
+# Select a deployment
+# Press F to fork
+# Choose "Save as template"
+```
+
+## Fork Template Wizard
+
+The fork wizard guides you through customization:
+
+### Step 1: Template Name
+
+```
+Fork Template - Name
+Enter a name for the new template:
+
+Name: Production GPT-4 Setup
+```
+
+### Step 2: Provider
+
+```
+Fork Template - Provider
+Select cloud provider:
+
+┌────────────────────────────────────────────┐
+│ > Hetzner Cloud                            │
+│   DigitalOcean                             │
+└────────────────────────────────────────────┘
+```
+
+### Step 3: Droplet Size (DigitalOcean only)
+
+```
+Fork Template - Droplet Size
+Select DigitalOcean droplet size:
+
+┌────────────────────────────────────────────────┐
+│ > s-1vcpu-2gb - 1 vCPU, 2GB RAM - $12/mo     │
+│   s-2vcpu-2gb - 2 vCPU, 2GB RAM - $18/mo     │
+└────────────────────────────────────────────────┘
+```
+
+### Step 4: AI Provider
+
+```
+Fork Template - AI Provider
+Select AI provider:
+
+┌────────────────────────────────────────────┐
+│ > Anthropic - Claude models                │
+│   OpenAI - GPT models                      │
+│   Google - Gemini models                   │
+└────────────────────────────────────────────┘
+```
+
+### Step 5: Model
+
+```
+Fork Template - Model
+Enter the model identifier:
+
+Model: gpt-4o-mini
+```
+
+### Step 6: Confirmation
+
+```
+Fork Template - Confirm
+
+┌────────────────────────────────────────────┐
+│ Name:         Production GPT-4 Setup       │
+│ Provider:     DigitalOcean                 │
+│ Droplet Size: s-1vcpu-2gb                  │
+│ AI Provider:  openai                       │
+│ Model:        gpt-4o-mini                  │
+│ Channel:      telegram                     │
+└────────────────────────────────────────────┘
+
+Press Y to confirm, N to go back
+```
+
+### Success
+
+```
+✓ Template Created!
+
+Your template "Production GPT-4 Setup" has been saved.
+
+Press any key to return to templates list
+```
+
+## Example Terminal Session
+
+```
+> /templates
+
+/templates - Manage deployment templates
+
+┌────────────────────────────────────────────────────┐
+│ > Anthropic Claude (Telegram) [built-in]          │
+│   OpenAI GPT-4 (Telegram) [built-in]              │
+└────────────────────────────────────────────────────┘
+
+[Enter]
+
+Anthropic Claude (Telegram)
+
+Official template for Anthropic Claude
+
+┌────────────────────────────────────────────┐
+│ Type:        Built-in                      │
+│ Provider:    Hetzner Cloud                 │
+│ AI Provider: anthropic                     │
+│ Model:       claude-sonnet-4-20250514      │
+└────────────────────────────────────────────┘
+
+[Press F]
+
+Fork Template - Name
+Name: My Claude Template
+
+[Enter]
+
+Fork Template - Provider
+> Hetzner Cloud
+
+[Enter]
+
+Fork Template - AI Provider
+> Anthropic
+
+[Enter]
+
+Fork Template - Model
+Model: claude-3-5-haiku-20241022
+
+[Enter]
+
+Fork Template - Confirm
+
+Name:         My Claude Template
+Provider:     Hetzner Cloud
+AI Provider:  anthropic
+Model:        claude-3-5-haiku-20241022
+
+[Press Y]
+
+✓ Template Created!
+
+/templates - Manage deployment templates
+
+┌────────────────────────────────────────────────────┐
+│ > My Claude Template [custom]                      │
+│   Anthropic Claude (Telegram) [built-in]           │
+└────────────────────────────────────────────────────┘
+```
+
+## Template Storage
+
+Templates are stored in:
+
+```
+~/.clawcontrol/templates/
+├── anthropic-claude-telegram.json
+├── openai-gpt4-telegram.json
+└── my-custom-template.json
+```
+
+Each template is a JSON file containing:
+
+```json
+{
+  "id": "my-custom-template",
+  "name": "My Custom Template",
+  "description": "Forked from Anthropic Claude",
+  "builtIn": false,
+  "createdAt": "2026-02-28T10:30:00.000Z",
+  "provider": "hetzner",
+  "hetzner": {
+    "serverType": "cpx11",
+    "location": "ash",
+    "image": "ubuntu-24.04"
+  },
+  "aiProvider": "anthropic",
+  "model": "claude-3-5-haiku-20241022",
+  "channel": "telegram"
+}
+```
+
+## Use Cases
+
+### Standardize Team Deployments
+
+Create templates for different environments:
+
+```
+• Production Template (claude-sonnet-4, CPX21)
+• Staging Template (claude-haiku, CPX11)
+• Development Template (gpt-4o-mini, small droplet)
+```
+
+Everyone uses the same configurations.
+
+### Quick Testing
+
+Create a "quick test" template:
+
+```
+Provider:     Hetzner (smallest size)
+AI Provider:  Anthropic
+Model:        claude-3-5-haiku-20241022 (fast, cheap)
+Channel:      Telegram
+```
+
+Spin up test instances in seconds.
+
+### Multi-Provider Setups
+
+Templates for different providers:
+
+```
+• Hetzner US East
+• DigitalOcean NYC
+• Hetzner EU (for GDPR compliance)
+```
+
+### Different AI Models
+
+Compare models easily:
+
+```
+• Claude Sonnet Template
+• GPT-4o Template
+• Gemini 2.0 Template
+```
+
+Deploy identical configs with different AI backends.
+
+## Keyboard Navigation
+
+**List View:**
+- **↑/↓** - Navigate templates
+- **Enter** - View template details
+- **Esc** - Return to home
+
+**Detail View:**
+- **F** - Fork template
+- **U** - Use template for new deployment
+- **D** - Delete custom template (if not built-in)
+- **Esc** - Back to list
+
+**Fork Wizard:**
+- **↑/↓** - Navigate options (in selection steps)
+- **Type** - Enter values (in input steps)
+- **Enter** - Confirm and continue
+- **Esc** - Go back
+
+**Delete Confirmation:**
+- **Y** - Confirm deletion
+- **N/Esc** - Cancel
+
+## Empty State
+
+If only built-in templates exist:
+
+```
+/templates - Manage deployment templates
+
+┌────────────────────────────────────────────────────┐
+│ > Anthropic Claude (Telegram) [built-in]          │
+│   OpenAI GPT-4 (Telegram) [built-in]              │
+└────────────────────────────────────────────────────┘
+
+Tip: Press F on any template to create your own custom version
+```
+
+## Tips
+
+<Tip>
+  Create templates for your most common configurations. This dramatically speeds up creating new deployments.
+</Tip>
+
+<Tip>
+  Fork built-in templates instead of creating from scratch. Built-in templates are tested and optimized.
+</Tip>
+
+<Note>
+  Templates only store configuration, not secrets. You'll still need to provide API keys and tokens when creating deployments.
+</Note>
+
+## Best Practices
+
+### Naming Templates
+
+Use descriptive names:
+
+```
+✓ "Production Claude Sonnet (US East)"
+✓ "Staging GPT-4o Mini"
+✓ "EU GDPR Compliant Setup"
+
+✗ "Template 1"
+✗ "My Template"
+✗ "Test"
+```
+
+### Organization
+
+Create templates for:
+
+1. **Environments** - Production, Staging, Development
+2. **Regions** - US, EU, Asia
+3. **Use Cases** - Customer Support, Content Generation, Code Assistant
+4. **Cost Tiers** - Budget, Standard, Premium
+
+### Maintenance
+
+Regularly update templates:
+
+```
+# Update model versions
+Old: claude-sonnet-4-20250514
+New: claude-sonnet-4-20260115
+
+# Update to new instance types
+Old: CPX11
+New: CPX21 (better performance)
+```
+
+## Advanced Usage
+
+### Manual Template Creation
+
+Create templates by editing JSON files:
+
+```bash
+cd ~/.clawcontrol/templates/
+cp anthropic-claude-telegram.json my-custom.json
+nano my-custom.json
+```
+
+### Template Sharing
+
+Share templates with team members:
+
+```bash
+# Export
+cp ~/.clawcontrol/templates/my-template.json ~/
+
+# Share file
+# Recipient imports:
+cp ~/my-template.json ~/.clawcontrol/templates/
+```
+
+### Backup Templates
+
+```bash
+tar -czf clawcontrol-templates-backup.tar.gz ~/.clawcontrol/templates/
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="New Command" icon="plus" href="/cli/new">
+    Use templates to create deployments
+  </Card>
+  <Card title="Deploy Command" icon="rocket" href="/cli/deploy">
+    Deploy template-based configs
+  </Card>
+  <Card title="Overview" icon="house" href="/cli/overview">
+    Back to CLI overview
+  </Card>
+  <Card title="Options" icon="gear" href="/cli/options">
+    Global CLI options
+  </Card>
+</CardGroup>

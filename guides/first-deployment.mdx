@@ -1,0 +1,356 @@
+---
+title: 'Your First Deployment'
+description: 'Step-by-step guide to deploying your first OpenClaw instance'
+---
+
+This guide walks you through creating and deploying your first OpenClaw instance using ClawControl.
+
+## Prerequisites
+
+Before you begin, you'll need:
+
+- A cloud provider account (Hetzner Cloud or DigitalOcean)
+- An API key from your cloud provider
+- An AI provider account (Anthropic, OpenAI, OpenRouter, etc.)
+- A Telegram bot token (from [@BotFather](https://t.me/botfather))
+- Your Telegram user ID for access control
+
+<Tip>
+  Use the built-in templates to get started quickly. Templates pre-configure optimal settings for common use cases.
+</Tip>
+
+## Creating Your Deployment
+
+<Steps>
+  <Step title="Launch ClawControl">
+    Start ClawControl from your terminal:
+    
+    ```bash
+    clawcontrol
+    ```
+    
+    You'll see the main menu with available commands.
+  </Step>
+
+  <Step title="Start the new deployment wizard">
+    Type `/new` and press Enter to start creating a deployment.
+    
+    The wizard will guide you through several steps:
+    
+    **Step 1: Choose a template**
+    
+    Select a pre-configured template or start with a blank configuration:
+    
+    ```
+    > Blank configuration
+      Hetzner + OpenRouter Kimi K2.5 [built-in]
+      DigitalOcean + OpenRouter Kimi K2.5 [built-in]
+    ```
+    
+    <Tip>
+      Built-in templates are tested configurations that work well for most users. Choose "Hetzner + OpenRouter Kimi K2.5" for a cost-effective setup.
+    </Tip>
+  </Step>
+
+  <Step title="Name your deployment">
+    Choose a unique name for your deployment:
+    
+    ```
+    Name: my-openclaw-server
+    ```
+    
+    - Use lowercase letters, numbers, and hyphens only
+    - Must be unique across your deployments
+    - This name will be used for the VPS hostname
+  </Step>
+
+  <Step title="Configure cloud provider">
+    If you selected a template, the provider is pre-selected. Otherwise, choose your provider:
+    
+    ```
+    > Hetzner Cloud - Recommended - US East
+      DigitalOcean - NYC1 - New York
+    ```
+    
+    **Enter your API key:**
+    
+    - For Hetzner: Get your API token from [Hetzner Cloud Console](https://console.hetzner.cloud/)
+    - For DigitalOcean: Create a Personal Access Token from [DigitalOcean API](https://cloud.digitalocean.com/account/api/tokens)
+    
+    The wizard validates your API key before proceeding.
+    
+    <Tip>
+      ClawControl can securely save your API keys for future deployments. Press `Y` when prompted to save.
+    </Tip>
+  </Step>
+
+  <Step title="Select server size (DigitalOcean only)">
+    If using DigitalOcean, choose your droplet size:
+    
+    ```
+    > s-1vcpu-2gb - 1 vCPU, 2GB RAM, 50GB SSD - $12/mo
+      s-2vcpu-2gb - 2 vCPU, 2GB RAM, 60GB SSD - $18/mo
+    ```
+    
+    <Warning>
+      OpenClaw requires at least 2GB RAM to run reliably. Smaller sizes may cause memory errors.
+    </Warning>
+  </Step>
+
+  <Step title="Configure AI provider">
+    Enter your AI provider details:
+    
+    **Provider:** Choose your AI service (Anthropic, OpenAI, OpenRouter, etc.)
+    
+    **API Key:** Enter your AI provider's API key
+    
+    **Model:** Specify the model identifier:
+    ```
+    Anthropic:  claude-sonnet-4-20250514
+    OpenAI:     gpt-4o
+    OpenRouter: anthropic/claude-sonnet-4-20250514
+    Google:     gemini-2.0-flash
+    Groq:       llama-3.3-70b-versatile
+    ```
+  </Step>
+
+  <Step title="Configure Telegram">
+    Set up your Telegram bot:
+    
+    **Bot Token:** Get this from [@BotFather](https://t.me/botfather)
+    ```
+    Format: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz
+    ```
+    
+    **Allowed User:** Enter your Telegram user ID for access control
+    
+    <Tip>
+      To find your Telegram user ID, message [@userinfobot](https://t.me/userinfobot)
+    </Tip>
+  </Step>
+
+  <Step title="Configure Tailscale (optional)">
+    Choose whether to set up Tailscale for secure gateway access:
+    
+    ```
+    > Skip
+      Configure Tailscale
+    ```
+    
+    Tailscale creates a private VPN so only you can access the OpenClaw gateway.
+    
+    <Tip>
+      You can always add Tailscale later by editing your deployment configuration.
+    </Tip>
+  </Step>
+
+  <Step title="Confirm and create">
+    Review your configuration and press `Y` to create the deployment:
+    
+    ```
+    Configuration Summary:
+    
+    Name:         my-openclaw-server
+    Provider:     Hetzner Cloud
+    Location:     Ashburn, VA (US East)
+    Server:       CPX11 (2 vCPU, 2GB RAM)
+    AI Provider:  OpenRouter
+    Model:        moonshotai/kimi-k2.5
+    Channel:      Telegram
+    
+    Press Y to confirm, N to go back
+    ```
+    
+    ClawControl creates the deployment configuration and saves it locally.
+  </Step>
+</Steps>
+
+## Deploying Your Instance
+
+After creating the deployment configuration, you're ready to deploy:
+
+<Steps>
+  <Step title="Start deployment">
+    From the main menu, select your deployment and run:
+    
+    ```bash
+    /deploy
+    ```
+    
+    The deployment process begins automatically.
+  </Step>
+
+  <Step title="Monitor progress">
+    ClawControl shows real-time progress as it:
+    
+    ```
+    [████████████████░░░░░░░░] 65%
+    Current: Installing Node.js
+    
+    Deployment Log:
+    [14:23:45] Starting deployment: my-openclaw-server
+    [14:23:46] Creating VPS server...
+    [14:24:12] Waiting for server to start...
+    [14:24:45] Server created with IP: 159.89.123.45
+    [14:24:46] Connecting via SSH...
+    [14:25:01] SSH connection established
+    [14:25:02] Setting up swap memory...
+    [14:25:15] Updating system packages...
+    [14:27:34] Installing NVM...
+    [14:27:45] Installing Node.js...
+    ```
+    
+    The deployment includes 16 checkpoints:
+    
+    1. Server created
+    2. SSH key uploaded
+    3. SSH connected
+    4. Swap configured
+    5. System updated
+    6. NVM installed
+    7. Node.js installed
+    8. pnpm installed
+    9. Chrome installed
+    10. OpenClaw installed
+    11. OpenClaw configured
+    12. Tailscale installed (if enabled)
+    13. Tailscale authenticated (if enabled)
+    14. Tailscale configured (if enabled)
+    15. Daemon started
+    16. Completed
+  </Step>
+
+  <Step title="Tailscale authentication (if enabled)">
+    If you enabled Tailscale, you'll be prompted to authenticate:
+    
+    ```
+    Confirmation Required
+    
+    Tailscale needs authentication.
+    
+    Would you like to open your browser to authenticate?
+    URL: https://login.tailscale.com/...
+    
+    Press Y for Yes, N for No
+    ```
+    
+    Press `Y` to open the authentication page in your browser. After authenticating, the deployment continues automatically.
+  </Step>
+
+  <Step title="Optional interactive setup">
+    Near the end of deployment, you may be prompted:
+    
+    ```
+    Your OpenClaw config has been applied and the daemon is running.
+    
+    Would you like to also run 'openclaw onboard' interactively
+    for additional setup?
+    ```
+    
+    - Press `Y` if you want to configure additional OpenClaw settings
+    - Press `N` to skip (your agent is already configured and running)
+    
+    If you choose `Y`, a terminal window opens with an SSH session.
+  </Step>
+
+  <Step title="Deployment complete">
+    When deployment finishes successfully, you'll see:
+    
+    ```
+    Deployment Successful!
+    Your OpenClaw instance is now running.
+    
+    Connection Details
+    Server IP:      159.89.123.45
+    Tailscale IP:   100.64.1.23
+    Gateway Port:   18789
+    
+    Next steps:
+      /ssh  - Connect to your server
+      /logs - View OpenClaw logs
+      Gateway: http://100.64.1.23:18789/
+    ```
+    
+    Your OpenClaw instance is now live and ready to use!
+  </Step>
+</Steps>
+
+## Testing Your Deployment
+
+<Steps>
+  <Step title="Test Telegram bot">
+    Open Telegram and start a conversation with your bot:
+    
+    ```
+    /start
+    ```
+    
+    Your bot should respond, confirming it's running correctly.
+  </Step>
+
+  <Step title="Access the gateway">
+    Open the gateway URL in your browser:
+    
+    ```
+    http://YOUR_TAILSCALE_IP:18789/
+    ```
+    
+    Or if Tailscale is not configured:
+    ```
+    http://YOUR_SERVER_IP:18789/
+    ```
+    
+    <Warning>
+      If you're not using Tailscale, your gateway is publicly accessible. Make sure to secure it or enable Tailscale.
+    </Warning>
+  </Step>
+
+  <Step title="Check deployment status">
+    Back in ClawControl, run:
+    
+    ```bash
+    /status
+    ```
+    
+    Select your deployment to see:
+    - Connection status
+    - OpenClaw daemon health
+    - Recent checkpoints
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Deployment fails
+
+If deployment fails, ClawControl automatically retries up to 3 times. If it still fails:
+
+1. Check the error message in the deployment log
+2. Run `/status` to see which checkpoint failed
+3. Run `/deploy` again - it resumes from the last successful checkpoint
+
+### Can't connect to SSH
+
+If SSH connection times out:
+
+1. Wait a few minutes for the server to finish booting
+2. Check your cloud provider's firewall settings
+3. Verify the server was created in your cloud provider's dashboard
+
+### OpenClaw not responding
+
+If your bot doesn't respond:
+
+1. Run `/logs` to check for errors
+2. Run `/ssh` to connect and check the service:
+   ```bash
+   systemctl status openclaw
+   ```
+3. Check your Telegram bot token and user ID are correct
+
+## Next Steps
+
+- [Managing Deployments](/guides/managing-deployments) - Learn how to edit, fork, and delete deployments
+- [SSH Access](/guides/ssh-access) - Connect to your server for advanced configuration
+- [Monitoring Logs](/guides/monitoring-logs) - View and troubleshoot your OpenClaw logs
+- [Using Templates](/guides/using-templates) - Create reusable deployment templates

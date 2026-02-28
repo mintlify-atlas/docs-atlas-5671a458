@@ -1,0 +1,294 @@
+---
+title: /deploy
+description: Deploy a configured instance to the cloud
+---
+
+The `/deploy` command deploys a previously configured OpenClaw instance to your chosen cloud provider. It provisions the VPS, installs dependencies, configures OpenClaw, and sets up Tailscale (if enabled).
+
+## Usage
+
+```
+/deploy
+```
+
+## Deployment Process
+
+The deploy command follows these steps:
+
+### 1. Select Deployment
+
+Choose which configuration to deploy:
+
+```
+/deploy - Select a deployment to deploy
+
+Use arrow keys to select, Enter to deploy:
+
+┌────────────────────────────────────────────┐
+│ > my-openclaw-server   [not_deployed]  hetzner │
+│   production-instance  [deployed]      hetzner │
+│   staging-test        [not_deployed]   digitalocean │
+└────────────────────────────────────────────┘
+```
+
+<Note>
+  Not-yet-deployed configurations appear first in the list for easy access.
+</Note>
+
+### 2. Confirmation
+
+Review what will be deployed:
+
+```
+/deploy - Confirm deployment
+
+Deploy "my-openclaw-server"?
+
+This will:
+• Create a VPS on hetzner
+• Install and configure OpenClaw
+• Set up Tailscale for secure access
+
+Estimated cost: ~$4.99/month (Hetzner CPX11)
+
+Press Y to confirm, N to cancel
+```
+
+### 3. Deployment Progress
+
+Watch real-time progress:
+
+```
+Deploying: my-openclaw-server
+
+[████████████████████░░░░] 75%
+Current: Installing OpenClaw
+
+Deployment Log
+[14:23:45] Starting deployment: my-openclaw-server
+[14:23:47] Creating SSH key pair
+[14:23:48] Uploading SSH key to Hetzner
+[14:23:49] Creating server: CPX11 in ash
+[14:24:01] Server created: 192.0.2.123
+[14:24:03] Waiting for SSH to become available
+[14:24:15] Installing system updates
+[14:24:45] Installing Node.js 20.x
+[14:25:10] Installing OpenClaw
+[14:25:30] Configuring OpenClaw agent
+```
+
+## Deployment Steps
+
+The deployment process includes these checkpoints:
+
+1. **SSH Key Generation** - Creates a unique SSH key pair
+2. **Key Upload** - Uploads public key to cloud provider
+3. **Server Provisioning** - Creates the VPS instance
+4. **Connection Wait** - Waits for SSH to become available
+5. **System Updates** - Updates Ubuntu packages
+6. **Node.js Installation** - Installs Node.js 20.x
+7. **OpenClaw Installation** - Installs OpenClaw globally
+8. **OpenClaw Configuration** - Sets up the agent configuration
+9. **Service Setup** - Creates systemd service
+10. **Tailscale Setup** (if enabled) - Configures VPN access
+11. **Interactive Onboarding** - Opens terminal for setup
+
+## Interactive Steps
+
+### Tailscale Authentication
+
+If Tailscale is enabled, you'll be prompted to authenticate:
+
+```
+Confirmation Required
+
+Tailscale is starting. Please authenticate:
+
+1. A browser window will open
+2. Log in to your Tailscale account
+3. Approve the machine
+
+Ready to open browser?
+
+Press Y for Yes, N for No
+```
+
+Press `Y` and a browser opens to the Tailscale login page.
+
+### OpenClaw Onboarding
+
+After initial setup, an interactive terminal opens:
+
+```
+Interactive Setup
+
+A terminal window has been opened.
+
+Instructions:
+1. Complete the setup in the terminal window
+2. Follow the prompts shown in the terminal
+3. When done, close the terminal window
+4. Press Enter here to continue
+
+Press Enter when you have completed the setup in the terminal
+```
+
+In the new terminal:
+
+```bash
+root@my-openclaw-server:~# openclaw onboard
+
+Welcome to OpenClaw!
+
+This will guide you through the initial setup.
+
+? Enter your workspace name: My Workspace
+? Select tools to enable:
+  ◉ bash
+  ◉ file_editor
+  ◉ browser
+
+✓ Configuration saved
+✓ Service started
+
+Setup complete! You can close this terminal window.
+
+=== Setup complete! You can close this terminal window. ===
+Press Enter to close...
+```
+
+## Resume Capability
+
+Deployments are checkpoint-based. If a deployment fails, you can run `/deploy` again and it will resume from the last successful checkpoint.
+
+```
+Deployment Failed
+
+Something went wrong during deployment.
+
+Error: Connection timeout at checkpoint: install_openclaw
+
+What you can do:
+  1. Run /deploy again - it will resume from the last successful step
+  2. Run /status to check the current state of your deployment
+  3. Run /destroy and /new to start fresh if the issue persists
+
+Press any key to return to home
+```
+
+## Success
+
+When deployment completes:
+
+```
+Deployment Successful!
+
+Your OpenClaw instance is now running.
+
+Connection Details
+Server IP:      192.0.2.123
+Tailscale IP:   100.64.0.5
+Gateway Port:   18789
+
+Next steps:
+  /ssh  - Connect to your server
+  /logs - View OpenClaw logs
+  Gateway: http://100.64.0.5:18789/
+
+Press any key to return to home
+```
+
+## Example Terminal Session
+
+```
+> /deploy
+
+/deploy - Select a deployment to deploy
+
+┌────────────────────────────────────────────┐
+│ > production-claude   [not_deployed]  hetzner │
+└────────────────────────────────────────────┘
+
+[Enter]
+
+Deploy "production-claude"?
+
+This will:
+• Create a VPS on hetzner
+• Install and configure OpenClaw
+• Set up Tailscale for secure access
+
+Press Y to confirm, N to cancel
+
+[Y]
+
+Deploying: production-claude
+
+[████████████████████████] 100%
+Current: Deployment complete
+
+✓ Deployment Successful!
+
+Connection Details
+Server IP:      203.0.113.45
+Tailscale IP:   100.64.0.12
+Gateway Port:   18789
+```
+
+## Tips
+
+<Tip>
+  Have your Tailscale credentials ready before deploying if you've enabled Tailscale. The deployment will pause to wait for authentication.
+</Tip>
+
+<Warning>
+  Deployments can take 5-10 minutes to complete. Don't close ClawControl during deployment - checkpoints allow safe resumption if interrupted.
+</Warning>
+
+## Troubleshooting
+
+### Deployment Stuck
+
+If deployment appears stuck:
+1. Wait at least 2 minutes - some steps take time
+2. Press Ctrl+C to cancel
+3. Run `/status` to check current state
+4. Run `/deploy` again to resume
+
+### SSH Connection Failed
+
+```
+Error: Connection timeout at checkpoint: wait_for_ssh
+```
+
+- Cloud provider may be slow provisioning
+- Firewall rules may be blocking SSH
+- Run `/deploy` again to retry
+
+### Tailscale Authentication Failed
+
+```
+Error: Tailscale authentication timeout
+```
+
+- You may have missed the browser authentication window
+- Run `/deploy` again
+- Choose "Yes" when prompted to open browser
+- Complete authentication within 5 minutes
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Status Command" icon="chart-line" href="/cli/status">
+    Monitor your deployment
+  </Card>
+  <Card title="SSH Command" icon="terminal" href="/cli/ssh">
+    Connect to your server
+  </Card>
+  <Card title="Logs Command" icon="file-lines" href="/cli/logs">
+    View application logs
+  </Card>
+  <Card title="Dashboard Command" icon="browser" href="/cli/dashboard">
+    Open web interface
+  </Card>
+</CardGroup>

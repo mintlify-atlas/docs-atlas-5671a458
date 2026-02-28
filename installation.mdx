@@ -1,0 +1,200 @@
+---
+title: Installation
+description: Install ClawControl on Linux, macOS, or Windows
+---
+
+ClawControl requires the Bun runtime. The one-liner install scripts handle this automatically, or you can install Bun manually if using a package manager.
+
+## One-liner install (recommended)
+
+The install scripts automatically detect your platform, install Bun if needed, and set up ClawControl globally.
+
+<CodeGroup>
+
+```bash Linux / macOS
+curl -fsSL https://raw.githubusercontent.com/ipenywis/clawcontrol/main/install.sh | bash
+```
+
+```powershell Windows (PowerShell)
+irm https://raw.githubusercontent.com/ipenywis/clawcontrol/main/install.ps1 | iex
+```
+
+</CodeGroup>
+
+<Note>
+The install scripts will:
+- Check for Bun and install it if missing
+- Install ClawControl globally
+- Add the `clawcontrol` command to your PATH
+</Note>
+
+## Package managers
+
+You can also install ClawControl using npm, pnpm, or Bun directly. **Note:** You must install Bun manually first, as these package managers only install ClawControl itself.
+
+### Install Bun first
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
+
+### Then install ClawControl
+
+<CodeGroup>
+
+```bash Bun
+bun add -g clawcontrol
+```
+
+```bash npm
+npm install -g clawcontrol
+```
+
+```bash pnpm
+pnpm add -g clawcontrol
+```
+
+</CodeGroup>
+
+<Warning>
+ClawControl requires the Bun runtime to execute. If you install via npm or pnpm without Bun, the CLI will not work. Always install Bun first when using package managers.
+</Warning>
+
+## System requirements
+
+<Steps>
+  <Step title="Bun runtime">
+    Required for running the ClawControl CLI. The install scripts handle this automatically, or install from [bun.sh](https://bun.sh).
+  </Step>
+  
+  <Step title="Node.js 20+">
+    Only required if you're developing or building ClawControl from source. Not needed for regular usage.
+  </Step>
+  
+  <Step title="Terminal with true color support">
+    For the best experience, use a modern terminal:
+    - **Recommended**: Ghostty, iTerm2, Kitty, WezTerm
+    - **macOS Terminal.app**: Requires macOS 26+ (Tahoe) for full color support
+    
+    ClawControl will detect terminals without true color support and show a warning banner.
+  </Step>
+</Steps>
+
+## Verify installation
+
+After installation, verify that ClawControl is available:
+
+```bash
+clawcontrol --version
+```
+
+<CodeGroup>
+
+```bash Output
+clawcontrol v0.2.3
+```
+
+```bash Show help
+clawcontrol --help
+```
+
+```bash Launch TUI
+clawcontrol
+```
+
+</CodeGroup>
+
+You should see the version number (currently 0.2.3). To launch the interactive TUI, simply run:
+
+```bash
+clawcontrol
+```
+
+This will open the ClawControl interface with the ASCII logo and command palette:
+
+```
+   _____ _                  _____            _             _
+  / ____| |                / ____|          | |           | |
+ | |    | | __ ___      __| |     ___  _ __ | |_ _ __ ___ | |
+ | |    | |/ _` \ \ /\ / /| |    / _ \| '_ \| __| '__/ _ \| |
+ | |____| | (_| |\ V  V / | |___| (_) | | | | |_| | | (_) | |
+  \_____|_|\__,_| \_/\_/   \_____\___/|_| |_|\__|_|  \___/|_|
+
+Deploy and manage OpenClaw instances with ease
+
+Type a command (e.g., /new)...
+```
+
+## Updating ClawControl
+
+To update to the latest version, run the install script again or use your package manager:
+
+<CodeGroup>
+
+```bash One-liner (Linux/macOS)
+curl -fsSL https://raw.githubusercontent.com/ipenywis/clawcontrol/main/install.sh | bash
+```
+
+```bash Bun
+bun update -g clawcontrol
+```
+
+```bash npm
+npm update -g clawcontrol
+```
+
+```bash pnpm
+pnpm update -g clawcontrol
+```
+
+</CodeGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Command not found: clawcontrol">
+    The ClawControl binary is not in your PATH. Try:
+    
+    1. Close and reopen your terminal
+    2. Check if `~/.bun/bin` is in your PATH: `echo $PATH`
+    3. Manually add to PATH: `export PATH="$HOME/.bun/bin:$PATH"`
+    4. Reinstall using the one-liner script
+  </Accordion>
+  
+  <Accordion title="Bun: command not found">
+    Bun is not installed or not in your PATH:
+    
+    ```bash
+    curl -fsSL https://bun.sh/install | bash
+    ```
+    
+    Then restart your terminal or run: `source ~/.bashrc` (or `~/.zshrc`)
+  </Accordion>
+  
+  <Accordion title="Colors look wrong or broken">
+    Your terminal may not support true color. ClawControl will show a warning banner if this is detected.
+    
+    **Solutions:**
+    - Switch to a modern terminal (Ghostty, iTerm2, Kitty, WezTerm)
+    - On macOS, upgrade to macOS 26+ for Terminal.app true color support
+    - On older systems, the CLI will still work but colors may render incorrectly
+  </Accordion>
+  
+  <Accordion title="Permission denied errors">
+    You may need to run with elevated permissions or fix ownership:
+    
+    ```bash
+    # Fix npm global directory ownership
+    sudo chown -R $(whoami) ~/.npm
+    
+    # Or reinstall without sudo using the one-liner
+    curl -fsSL https://raw.githubusercontent.com/ipenywis/clawcontrol/main/install.sh | bash
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<Card title="Quickstart" icon="rocket" href="/quickstart">
+  Deploy your first OpenClaw instance with ClawControl
+</Card>

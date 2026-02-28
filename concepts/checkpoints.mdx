@@ -1,0 +1,472 @@
+---
+title: Checkpoints
+description: Understanding ClawControl's checkpoint-based deployment recovery system
+---
+
+Checkpoints are ClawControl's built-in safety mechanism for reliable deployments. They allow deployments to resume from the last successful step if something goes wrong, rather than starting over from scratch.
+
+## What are Checkpoints?
+
+A checkpoint represents a completed step in the deployment process. Each time ClawControl successfully completes a deployment step, it saves a checkpoint to the deployment's state.
+
+From `src/types/index.ts:67-71`:
+
+```typescript
+interface Checkpoint {
+  name: CheckpointName;        // Which step was completed
+  completedAt: string;         // When it was completed (ISO timestamp)
+  retryCount: number;          // How many retries it took
+}
+```
+
+<Info>
+Checkpoints make deployments resilient to temporary failures like network issues, rate limits, or transient API errors.
+</Info>
+
+## Checkpoint Stages
+
+Every deployment progresses through these checkpoints in order. From `src/services/deployment.ts:26-43`:
+
+```typescript
+const CHECKPOINT_ORDER: CheckpointName[] = [
+  "server_created",          // VPS server provisioned
+  "ssh_key_uploaded",        // SSH key added to provider
+  "ssh_connected",           // SSH connection established
+  "swap_configured",         // Swap memory set up
+  "system_updated",          // System packages updated
+  "nvm_installed",           // Node Version Manager installed
+  "node_installed",          // Node.js installed
+  "pnpm_installed",          // pnpm package manager installed
+  "chrome_installed",        // Google Chrome installed
+  "openclaw_installed",      // OpenClaw package installed
+  "openclaw_configured",     // OpenClaw configured
+  "tailscale_installed",     // Tailscale VPN installed
+  "tailscale_authenticated", // Tailscale authenticated
+  "tailscale_configured",    // Tailscale serve configured
+  "daemon_started",          // OpenClaw daemon started
+  "completed",               // Deployment fully complete
+];
+```
+
+### Detailed Checkpoint Descriptions
+
+<Accordion title="server_created - VPS Server Provisioned">
+Creates the cloud server instance:
+- Generates SSH key pair (if not exists)
+- Uploads public key to cloud provider
+- Creates VPS server with specified configuration
+- Waits for server to reach "running" state
+- Records server ID and public IP in state
+
+Implementation: `src/services/deployment.ts:358-574`
+</Accordion>
+
+<Accordion title="ssh_key_uploaded - SSH Key Added">
+Ensures SSH key is available for authentication:
+- Verifies SSH key exists in provider account
+- Validates key fingerprint matches local key
+
+Note: This happens during server creation, but exists as a separate checkpoint for recovery granularity.
+
+Implementation: `src/services/deployment.ts:576-583`
+</Accordion>
+
+<Accordion title="ssh_connected - SSH Connection Established">
+Establishes SSH connection to the server:
+- Waits for SSH service to be available (up to 3 minutes)
+- Tests SSH authentication with private key
+- Establishes persistent connection for subsequent steps
+
+Implementation: `src/services/deployment.ts:585-605`
+</Accordion>
+
+<Accordion title="swap_configured - Swap Memory Set Up">
+Configures swap space for better memory management:
+- Creates swap file for systems with limited RAM
+- Enables swap and configures swappiness
+- Essential for running Chrome on small VPS instances
+
+Implementation: `src/services/deployment.ts:629-632`
+</Accordion>
+
+<Accordion title="system_updated - System Packages Updated">
+Updates the operating system:
+- Runs `apt update` to refresh package lists
+- Installs security updates and dependencies
+- Ensures latest package versions
+
+Implementation: `src/services/deployment.ts:634-637`
+</Accordion>
+
+<Accordion title="nvm_installed - Node Version Manager Installed">
+Installs NVM for Node.js version management:
+- Downloads and installs latest NVM
+- Configures shell profile for NVM
+- Enables easy Node.js version switching
+
+Implementation: `src/services/deployment.ts:639-642`
+</Accordion>
+
+<Accordion title="node_installed - Node.js Installed">
+Installs Node.js runtime:
+- Installs latest LTS version via NVM
+- Sets as default Node.js version
+- Verifies installation
+
+Implementation: `src/services/deployment.ts:644-647`
+</Accordion>
+
+<Accordion title="pnpm_installed - pnpm Package Manager Installed">
+Installs pnpm package manager:
+- Installs pnpm globally via npm
+- Required for OpenClaw dependencies
+- Faster and more efficient than npm
+
+Implementation: `src/services/deployment.ts:649-652`
+</Accordion>
+
+<Accordion title="chrome_installed - Google Chrome Installed">
+Installs Google Chrome browser:
+- Downloads and installs Chrome stable
+- Installs required dependencies
+- Necessary for OpenClaw's browser automation
+
+Implementation: `src/services/deployment.ts:654-657`
+</Accordion>
+
+<Accordion title="openclaw_installed - OpenClaw Package Installed">
+Installs OpenClaw:
+- Installs latest OpenClaw via npm
+- Makes `openclaw` command globally available
+- Prepares for configuration
+
+Implementation: `src/services/deployment.ts:659-662`
+</Accordion>
+
+<Accordion title="openclaw_configured - OpenClaw Configured">
+Configures OpenClaw settings:
+- Writes OpenClaw configuration file
+- Sets up AI provider credentials
+- Configures channel settings (Telegram, etc.)
+- Generates gateway authentication token
+
+Implementation: `src/services/deployment.ts:664-681`
+</Accordion>
+
+<Accordion title="tailscale_installed - Tailscale VPN Installed">
+Installs Tailscale for secure networking:
+- Downloads and installs Tailscale
+- Skipped if `skipTailscale: true` in config
+- Enables secure private network access
+
+Implementation: `src/services/deployment.ts:683-692`
+</Accordion>
+
+<Accordion title="tailscale_authenticated - Tailscale Authenticated">
+Authenticates with Tailscale:
+- Generates authentication URL
+- Prompts user to authenticate in browser
+- Waits for authentication to complete (5 minute timeout)
+- Skipped if Tailscale installation was skipped
+
+Implementation: `src/services/deployment.ts:694-726`
+</Accordion>
+
+<Accordion title="tailscale_configured - Tailscale Serve Configured">
+Configures Tailscale serve for gateway access:
+- Sets up Tailscale Serve to proxy gateway
+- Records Tailscale IP address
+- Enables secure remote dashboard access
+- Skipped if Tailscale installation was skipped
+
+Implementation: `src/services/deployment.ts:728-742`
+</Accordion>
+
+<Accordion title="daemon_started - OpenClaw Daemon Started">
+Starts the OpenClaw service:
+- Installs systemd service unit
+- Starts and enables OpenClaw daemon
+- Optionally runs interactive `openclaw onboard`
+- Verifies daemon is running
+
+Implementation: `src/services/deployment.ts:744-793`
+</Accordion>
+
+<Accordion title="completed - Deployment Complete">
+Final checkpoint indicating successful deployment:
+- All steps completed successfully
+- OpenClaw is running and accessible
+- Deployment status set to "deployed"
+
+Implementation: `src/services/deployment.ts:350-353`
+</Accordion>
+
+## How Recovery Works
+
+When a deployment fails or is interrupted, ClawControl can resume from the last successful checkpoint.
+
+### Finding the Last Checkpoint
+
+From `src/services/deployment.ts:80-94`:
+
+```typescript
+function getLastCheckpoint(state: DeploymentState): CheckpointName | null {
+  if (state.checkpoints.length === 0) {
+    return null;
+  }
+
+  // Sort by order and return the last one
+  const sorted = state.checkpoints
+    .filter((cp) => CHECKPOINT_ORDER.includes(cp.name))
+    .sort(
+      (a, b) =>
+        CHECKPOINT_ORDER.indexOf(a.name) - CHECKPOINT_ORDER.indexOf(b.name)
+    );
+
+  return sorted.length > 0 ? sorted[sorted.length - 1].name : null;
+}
+```
+
+### Determining Next Step
+
+From `src/services/deployment.ts:99-112`:
+
+```typescript
+function getNextCheckpoint(state: DeploymentState): CheckpointName {
+  const lastCheckpoint = getLastCheckpoint(state);
+
+  if (!lastCheckpoint) {
+    return CHECKPOINT_ORDER[0];  // Start from beginning
+  }
+
+  const currentIndex = CHECKPOINT_ORDER.indexOf(lastCheckpoint);
+  if (currentIndex === -1 || currentIndex >= CHECKPOINT_ORDER.length - 1) {
+    return "completed";
+  }
+
+  return CHECKPOINT_ORDER[currentIndex + 1];
+}
+```
+
+### Automatic Retry Logic
+
+Each checkpoint automatically retries up to 3 times on failure. From `src/services/deployment.ts:236-291`:
+
+```typescript
+while (retryCount < MAX_RETRIES) {
+  try {
+    await this.executeCheckpoint(checkpoint);
+    markCheckpointComplete(this.deploymentName, checkpoint, retryCount);
+    break;
+  } catch (error) {
+    retryCount++;
+    // ... error handling and retry logic
+    
+    if (retryCount < MAX_RETRIES) {
+      // Wait 5 seconds before retrying
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    } else {
+      // Ask user to retry from beginning
+      const shouldRetry = await this.onConfirm(
+        `"${stepDescription}" failed after ${MAX_RETRIES} attempts.\n\n` +
+        `Would you like to retry from the beginning?`
+      );
+      // ...
+    }
+  }
+}
+```
+
+<Note>
+After 3 failed attempts, ClawControl asks if you want to retry from the beginning or abort the deployment.
+</Note>
+
+## Checkpoint Storage
+
+Checkpoints are stored in the deployment's `state.json` file:
+
+```json
+{
+  "status": "configuring",
+  "serverId": "12345678",
+  "serverIp": "203.0.113.42",
+  "checkpoints": [
+    {
+      "name": "server_created",
+      "completedAt": "2025-01-15T10:32:00.000Z",
+      "retryCount": 0
+    },
+    {
+      "name": "ssh_connected",
+      "completedAt": "2025-01-15T10:34:00.000Z",
+      "retryCount": 1
+    },
+    {
+      "name": "system_updated",
+      "completedAt": "2025-01-15T10:36:00.000Z",
+      "retryCount": 0
+    }
+  ],
+  "updatedAt": "2025-01-15T10:36:00.000Z"
+}
+```
+
+Location: `~/.clawcontrol/deployments/<name>/state.json`
+
+## Recovery Examples
+
+### Scenario 1: Network Interruption
+
+```
+Deployment progress:
+✅ server_created
+✅ ssh_key_uploaded
+✅ ssh_connected
+❌ swap_configured (network timeout)
+```
+
+When you re-run `clawcontrol deploy <name>`:
+- Skips: server_created, ssh_key_uploaded, ssh_connected
+- Resumes from: swap_configured
+- Continues with remaining steps
+
+### Scenario 2: Provider Rate Limit
+
+```
+Deployment progress:
+❌ server_created (rate limit, attempt 1)
+⏳ Waiting 5 seconds...
+❌ server_created (rate limit, attempt 2)
+⏳ Waiting 5 seconds...
+✅ server_created (success on attempt 3)
+```
+
+Checkpoint saved with `retryCount: 2`
+
+### Scenario 3: Manual Interruption
+
+```
+Deployment progress:
+✅ server_created
+✅ ssh_key_uploaded
+✅ ssh_connected
+✅ swap_configured
+^C User interrupted
+```
+
+Next deployment run resumes from `system_updated`
+
+## Manual Checkpoint Management
+
+You can inspect and manage checkpoints:
+
+### View Current Checkpoints
+
+```bash
+cat ~/.clawcontrol/deployments/<name>/state.json | jq '.checkpoints'
+```
+
+### Reset to Specific Checkpoint
+
+From `src/services/deployment.ts:161-179`:
+
+```typescript
+function resetToCheckpoint(
+  deploymentName: string,
+  checkpointName: CheckpointName
+): DeploymentState {
+  const state = readDeploymentState(deploymentName);
+  const checkpointIndex = CHECKPOINT_ORDER.indexOf(checkpointName);
+
+  // Keep only checkpoints before the target
+  const newCheckpoints = state.checkpoints.filter((cp) => {
+    const cpIndex = CHECKPOINT_ORDER.indexOf(cp.name);
+    return cpIndex < checkpointIndex;
+  });
+
+  return updateDeploymentState(deploymentName, {
+    checkpoints: newCheckpoints,
+    status: newCheckpoints.length > 0 ? "configuring" : "initialized",
+    lastError: undefined,
+  });
+}
+```
+
+<Warning>
+Manually resetting checkpoints can leave orphaned resources on your cloud provider. Only use this if you know what you're doing.
+</Warning>
+
+## Progress Reporting
+
+ClawControl reports progress during deployment:
+
+```typescript
+interface DeploymentProgress {
+  currentStep: CheckpointName;
+  completedSteps: CheckpointName[];
+  totalSteps: number;
+  progress: number;          // Percentage (0-100)
+  message: string;           // Human-readable status
+}
+```
+
+Example output:
+```
+[12/16] Installing Google Chrome...
+[13/16] Installing OpenClaw...
+[14/16] Configuring OpenClaw...
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Don't Delete state.json" icon="trash">
+    Deleting state.json loses all checkpoint data and requires starting over.
+  </Card>
+  
+  <Card title="Let Retries Work" icon="rotate">
+    Wait for automatic retries before manually intervening.
+  </Card>
+  
+  <Card title="Check Logs on Failure" icon="file-lines">
+    Review error messages to understand why a checkpoint failed.
+  </Card>
+  
+  <Card title="Keep Backups" icon="floppy-disk">
+    Back up ~/.clawcontrol/deployments/ to preserve checkpoint state.
+  </Card>
+</CardGroup>
+
+## Why Checkpoints Matter
+
+Without checkpoints, every failure would require:
+1. Deleting the half-configured server
+2. Creating a new server
+3. Starting installation from scratch
+4. Repeating all previous steps
+
+With checkpoints:
+1. Resume from last successful step
+2. Only retry the failed operation
+3. Save time and reduce API calls
+4. Minimize costs from partially-deployed resources
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Deploy Command" icon="rocket" href="/cli/deploy">
+    See how deployment uses checkpoints
+  </Card>
+  
+  <Card title="Deployments" icon="layer-group" href="/concepts/deployments">
+    Learn about the full deployment lifecycle
+  </Card>
+  
+  <Card title="Monitoring Logs" icon="wrench" href="/guides/monitoring-logs">
+    Common deployment issues and solutions
+  </Card>
+  
+  <Card title="Status Command" icon="info" href="/cli/status">
+    Check checkpoint progress
+  </Card>
+</CardGroup>

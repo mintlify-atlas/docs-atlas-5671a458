@@ -1,0 +1,103 @@
+---
+title: CLI Overview
+description: Introduction to the ClawControl command-line interface
+---
+
+ClawControl is an interactive TUI (Text User Interface) tool that simplifies deploying and managing OpenClaw instances on cloud providers. It handles all the complex setup including VPS provisioning, Node.js installation, OpenClaw configuration, and Tailscale VPN setup.
+
+## Installation
+
+Install ClawControl globally via npm:
+
+```bash
+npm install -g clawcontrol
+```
+
+## Basic Usage
+
+Launch the interactive TUI:
+
+```bash
+clawcontrol
+```
+
+The TUI provides a command-based interface where you type commands like `/new`, `/deploy`, `/status`, etc.
+
+## Command Structure
+
+All commands start with a forward slash (`/`) followed by the command name:
+
+```
+/new        # Initialize a new deployment
+/deploy     # Deploy a configuration
+/status     # Check deployment status
+/ssh        # Connect to a server
+/logs       # View logs
+/dashboard  # Open web dashboard
+/destroy    # Delete a deployment
+```
+
+## Interactive Features
+
+- **Command autocompletion**: Type `/` and start typing to see suggestions
+- **Arrow key navigation**: Use up/down arrows to navigate through options
+- **Tab completion**: Press Tab to autocomplete commands from suggestions
+- **Help system**: Type `/help` for a complete command reference
+
+## Quick Start Workflow
+
+1. **Create a deployment configuration**
+   ```
+   /new
+   ```
+
+2. **Deploy to the cloud**
+   ```
+   /deploy
+   ```
+
+3. **Monitor your deployment**
+   ```
+   /status
+   ```
+
+4. **Connect via SSH**
+   ```
+   /ssh
+   ```
+
+## Supported Cloud Providers
+
+- **Hetzner Cloud** - Recommended (~$4.99/month for CPX11)
+- **DigitalOcean** - Starting at $12/month
+- **Vultr** - Coming soon
+
+## Configuration Storage
+
+ClawControl stores all deployment configurations in:
+
+```
+~/.clawcontrol/deployments/
+```
+
+Each deployment has its own directory containing:
+- Configuration files (`.json`)
+- SSH keys (`.pem`)
+- State information
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="New Command" icon="plus" href="/cli/new">
+    Create your first deployment
+  </Card>
+  <Card title="Deploy Command" icon="rocket" href="/cli/deploy">
+    Deploy to the cloud
+  </Card>
+  <Card title="Status Command" icon="chart-line" href="/cli/status">
+    Monitor deployments
+  </Card>
+  <Card title="Templates" icon="layer-group" href="/cli/templates">
+    Use reusable presets
+  </Card>
+</CardGroup>

@@ -1,0 +1,90 @@
+---
+title: 'Cloud Providers Overview'
+description: 'Compare and choose the right cloud provider for your OpenClaw deployment'
+---
+
+ClawControl supports multiple cloud providers to give you flexibility in deploying OpenClaw instances. Each provider offers different pricing, regions, and server configurations.
+
+## Supported Providers
+
+<CardGroup cols={2}>
+  <Card title="Hetzner Cloud" icon="server" href="/providers/hetzner">
+    European-based provider with competitive pricing. Starting at ~$4.99/month for CPX11 in US East.
+  </Card>
+  
+  <Card title="DigitalOcean" icon="water" href="/providers/digitalocean">
+    Global provider with extensive region coverage. Starting at $12/month for basic droplets.
+  </Card>
+</CardGroup>
+
+<Note>
+  Vultr support is coming soon and will provide additional region options and pricing tiers.
+</Note>
+
+## Pricing Comparison
+
+Based on the default configurations used by ClawControl:
+
+| Provider | Default Plan | vCPUs | RAM | Storage | Price/Month |
+|----------|--------------|-------|-----|---------|-------------|
+| Hetzner | CPX11 (US East) | 2 | 2 GB | 40 GB | ~$4.99 |
+| DigitalOcean | s-1vcpu-2gb (NYC1) | 1 | 2 GB | 50 GB | $12.00 |
+
+<Tip>
+  Hetzner offers the most cost-effective option for basic deployments, while DigitalOcean provides broader global coverage.
+</Tip>
+
+## Provider Selection
+
+When choosing a provider, consider:
+
+- **Budget**: Hetzner offers lower pricing for similar specifications
+- **Region**: Choose a provider with servers close to your users
+- **Compliance**: Consider data residency requirements for your use case
+- **Experience**: Use a provider you're already familiar with
+
+## Getting Started
+
+To deploy with a specific provider:
+
+1. Get an API key from your chosen provider:
+   - [Hetzner API Key](/providers/hetzner#api-key-setup)
+   - [DigitalOcean API Token](/providers/digitalocean#api-token-setup)
+
+2. Run the deployment wizard:
+   ```bash
+   clawcontrol /new
+   ```
+
+3. Select your provider and configure your deployment
+
+4. Deploy to the cloud:
+   ```bash
+   clawcontrol /deploy
+   ```
+
+## Provider Configuration
+
+Each provider has specific configuration options that can be customized:
+
+### Hetzner
+- **Server Type**: Choose from CPX, CX, or CCX series
+- **Location**: Available in US East (ash), EU regions
+- **Image**: Ubuntu 24.04 (default)
+
+### DigitalOcean
+- **Size**: Choose from various droplet sizes
+- **Region**: NYC, SFO, EU, Asia-Pacific regions
+- **Image**: Ubuntu 24.04 (default)
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Configure Hetzner" icon="gear" href="/providers/hetzner">
+    Learn about Hetzner-specific configuration options
+  </Card>
+  
+  <Card title="Configure DigitalOcean" icon="gear" href="/providers/digitalocean">
+    Learn about DigitalOcean-specific configuration options
+  </Card>
+</CardGroup>

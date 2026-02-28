@@ -1,0 +1,431 @@
+---
+title: Testing
+description: Testing setup and practices for ClawControl
+---
+
+## Test Framework
+
+ClawControl uses **[Vitest](https://vitest.dev/)** as its test framework. Vitest is a fast, Vite-native unit test framework with a Jest-compatible API.
+
+## Configuration
+
+Test configuration is defined in `vitest.config.ts`:
+
+```typescript
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  test: {
+    globals: true,          // Enable global test APIs (describe, it, expect)
+    environment: "node",    // Use Node.js environment
+    include: ["tests/**/*.test.ts"],  // Test file pattern
+  },
+});
+```
+
+### Key Settings
+
+- **globals: true** - Import `describe`, `it`, `expect`, etc. without explicit imports
+- **environment: "node"** - Tests run in a Node.js environment (not browser)
+- **include** - Only files matching `tests/**/*.test.ts` are executed
+
+## Running Tests
+
+### Run All Tests
+
+```bash
+pnpm test
+```
+
+This runs all tests once in non-watch mode using `vitest run`.
+
+### Watch Mode
+
+For development with auto-rerun on file changes:
+
+```bash
+px vitest
+```
+
+### Run Specific Tests
+
+Run tests matching a pattern:
+
+```bash
+px vitest hetzner
+```
+
+Run a specific test file:
+
+```bash
+px vitest tests/providers/hetzner.test.ts
+```
+
+### Coverage
+
+Generate coverage report:
+
+```bash
+px vitest --coverage
+```
+
+## Test Organization
+
+Tests are located in the `tests/` directory, mirroring the `src/` structure:
+
+```
+tests/
+└── providers/
+    ├── hetzner.test.ts
+    └── digitalocean.test.ts
+```
+
+### File Naming Convention
+
+Test files follow the pattern:
+
+```
+{module-name}.test.ts
+```
+
+Examples:
+- `hetzner.test.ts` - Tests for `src/providers/hetzner/api.ts`
+- `digitalocean.test.ts` - Tests for `src/providers/digitalocean/api.ts`
+
+## Test Structure
+
+Tests use the `describe`/`it` structure from Vitest:
+
+```typescript
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+describe("ComponentName", () => {
+  beforeEach(() => {
+    // Setup before each test
+  });
+
+  afterEach(() => {
+    // Cleanup after each test
+  });
+
+  describe("methodName", () => {
+    it("should do something", async () => {
+      // Test implementation
+      expect(result).toBe(expected);
+    });
+  });
+});
+```
+
+## Example Tests
+
+### Provider API Tests
+
+Tests for cloud provider API clients mock HTTP requests using `vi.fn()`:
+
+#### Hetzner Client Test (tests/providers/hetzner.test.ts)
+
+```typescript
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { HetznerClient, HetznerAPIError } from "../../src/providers/hetzner/api.js";
+
+const TEST_API_KEY = "test-hetzner-api-key-1234567890";
+
+function mockFetch(response: object | null, status: number = 200) {
+  return vi.fn().mockResolvedValue({
+    ok: status >= 200 && status < 300,
+    status,
+    json: () => Promise.resolve(response),
+  });
+}
+
+describe("HetznerClient", () => {
+  let originalFetch: typeof globalThis.fetch;
+
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    vi.restoreAllMocks();
+  });
+
+  describe("validateAPIKey", () => {
+    it("should return true for a valid API key", async () => {
+      globalThis.fetch = mockFetch({ servers: [] });
+
+      const client = new HetznerClient(TEST_API_KEY);
+      const result = await client.validateAPIKey();
+
+      expect(result).toBe(true);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "https://api.hetzner.cloud/v1/servers",
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({
+            Authorization: `Bearer ${TEST_API_KEY}`,
+          }),
+        })
+      );
+    });
+
+    it("should return false for an invalid API key", async () => {
+      globalThis.fetch = mockFetch(
+        { error: { code: "unauthorized", message: "unauthorized" } },
+        403
+      );
+
+      const client = new HetznerClient("bad-key");
+      const result = await client.validateAPIKey();
+
+      expect(result).toBe(false);
+    });
+  });
+});
+```
+
+#### DigitalOcean Client Test (tests/providers/digitalocean.test.ts)
+
+```typescript
+import { describe, it, expect, vi } from "vitest";
+import { DigitalOceanClient } from "../../src/providers/digitalocean/api.js";
+
+describe("DigitalOceanClient", () => {
+  describe("Droplets", () => {
+    it("should create a droplet with SSH keys", async () => {
+      const createResponse = {
+        droplet: {
+          id: 123,
+          name: "test-droplet",
+          status: "new",
+          networks: {
+            v4: [{ ip_address: "1.2.3.4", type: "public" }],
+            v6: [],
+          },
+          size_slug: "s-1vcpu-1gb",
+          region: { slug: "nyc1", name: "New York 1" },
+          image: { slug: "ubuntu-24-04-x64", name: "Ubuntu 24.04" },
+          created_at: "2024-01-01T00:00:00Z",
+        },
+        links: {
+          actions: [{
+            id: 1,
+            rel: "create",
+            href: "https://api.digitalocean.com/v2/actions/1"
+          }]
+        },
+      };
+
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 202,
+        json: () => Promise.resolve(createResponse),
+      });
+
+      const client = new DigitalOceanClient("test-token");
+      const result = await client.createDroplet({
+        name: "test-droplet",
+        region: "nyc1",
+        size: "s-1vcpu-1gb",
+        image: "ubuntu-24-04-x64",
+        ssh_keys: [1, 2],
+      });
+
+      expect(result.droplet.name).toBe("test-droplet");
+      expect(result.links.actions).toHaveLength(1);
+    });
+  });
+});
+```
+
+### Testing Async Operations
+
+Many provider operations are asynchronous. Use `async/await` in tests:
+
+```typescript
+it("should wait for server to be running", async () => {
+  const startingServer = { id: 123, status: "initializing" };
+  const runningServer = { id: 123, status: "running" };
+
+  let callCount = 0;
+  globalThis.fetch = vi.fn().mockImplementation(() => {
+    callCount++;
+    const server = callCount <= 2 ? startingServer : runningServer;
+    return Promise.resolve({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ server }),
+    });
+  });
+
+  const client = new HetznerClient(TEST_API_KEY);
+  const result = await client.waitForServerRunning(123, 10000, 10);
+
+  expect(result.status).toBe("running");
+  expect(callCount).toBeGreaterThanOrEqual(3);
+});
+```
+
+### Testing Error Handling
+
+Test that errors are properly thrown and handled:
+
+```typescript
+it("should throw HetznerAPIError on API error", async () => {
+  globalThis.fetch = mockFetch(
+    { error: { code: "unauthorized", message: "unauthorized" } },
+    403
+  );
+
+  const client = new HetznerClient(TEST_API_KEY);
+  await expect(client.listServers()).rejects.toThrow(HetznerAPIError);
+  await expect(client.listServers()).rejects.toThrow("unauthorized");
+});
+
+it("should include error code", async () => {
+  globalThis.fetch = mockFetch(
+    { error: { code: "rate_limit_exceeded", message: "Rate limit exceeded" } },
+    429
+  );
+
+  const client = new HetznerClient(TEST_API_KEY);
+  try {
+    await client.listServers();
+    expect.fail("Should have thrown");
+  } catch (err) {
+    expect(err).toBeInstanceOf(HetznerAPIError);
+    expect((err as HetznerAPIError).code).toBe("rate_limit_exceeded");
+  }
+});
+```
+
+## Mocking
+
+### Mock Functions
+
+Use `vi.fn()` to create mock functions:
+
+```typescript
+const mockCallback = vi.fn();
+mockCallback("arg1", "arg2");
+
+expect(mockCallback).toHaveBeenCalledWith("arg1", "arg2");
+expect(mockCallback).toHaveBeenCalledTimes(1);
+```
+
+### Mock Implementations
+
+Provide custom implementations for mocks:
+
+```typescript
+const mockFn = vi.fn().mockImplementation((x) => x * 2);
+expect(mockFn(5)).toBe(10);
+```
+
+### Mock Global fetch
+
+Provider tests mock `globalThis.fetch`:
+
+```typescript
+beforeEach(() => {
+  originalFetch = globalThis.fetch;
+});
+
+afterEach(() => {
+  globalThis.fetch = originalFetch;
+  vi.restoreAllMocks();
+});
+
+it("should make API request", async () => {
+  globalThis.fetch = vi.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve({ data: "value" }),
+  });
+
+  // Test code that uses fetch
+});
+```
+
+## Test Coverage
+
+Current test coverage focuses on:
+
+### Provider APIs
+
+- **Hetzner Cloud API** (`tests/providers/hetzner.test.ts`)
+  - API key validation
+  - SSH key management (create, list, delete)
+  - Server operations (create, get, delete, wait for ready)
+  - Server types and locations
+  - Action polling
+  - Error handling
+
+- **DigitalOcean API** (`tests/providers/digitalocean.test.ts`)
+  - API token validation
+  - SSH key management
+  - Droplet operations (create, get, delete, wait for active)
+  - Power actions (power on/off, reboot, shutdown)
+  - Sizes and regions
+  - Error handling
+
+### Future Test Coverage
+
+Areas to expand test coverage:
+
+- **Services layer** - Config management, SSH operations, deployment orchestration
+- **Components** - View rendering and interactions (requires TUI testing utilities)
+- **Integration tests** - Full deployment workflow
+- **E2E tests** - CLI commands and user flows
+
+## Writing New Tests
+
+### For Provider APIs
+
+1. Create `tests/providers/{provider}.test.ts`
+2. Import the client class
+3. Mock `globalThis.fetch` in `beforeEach`
+4. Test each method:
+   - Happy path (success)
+   - Error cases (4xx, 5xx)
+   - Edge cases (timeouts, retries)
+5. Restore mocks in `afterEach`
+
+### For Services
+
+1. Create `tests/services/{service}.test.ts`
+2. Mock file system operations if needed (`vi.mock('node:fs')`)
+3. Test business logic in isolation
+4. Verify function calls and return values
+
+### Best Practices
+
+- **Test one thing per test** - Each `it()` block should test a single behavior
+- **Use descriptive names** - Test names should explain what is being tested
+- **Arrange, Act, Assert** - Structure tests with setup, execution, verification
+- **Mock external dependencies** - Don't make real API calls or file system changes
+- **Clean up after tests** - Restore mocks and clear state in `afterEach`
+- **Test error paths** - Don't just test the happy path
+
+## Continuous Integration
+
+When setting up CI/CD:
+
+```yaml
+# Example GitHub Actions workflow
+steps:
+  - uses: actions/checkout@v3
+  - uses: oven-sh/setup-bun@v1
+  - run: pnpm install
+  - run: pnpm typecheck
+  - run: pnpm test
+  - run: pnpm build
+```
+
+## Next Steps
+
+- Set up your [Development Environment](/development/setup)
+- Understand the [Architecture](/development/architecture)
+- Contribute tests for uncovered areas
+- Check the [CLI Reference](/cli/overview) for command implementation details

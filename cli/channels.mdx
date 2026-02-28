@@ -1,0 +1,365 @@
+---
+title: /channels
+description: View and manage communication channels
+---
+
+The `/channels` command displays communication channel configurations for all deployments. This shows Telegram bot settings, including tokens and access control.
+
+## Usage
+
+```
+/channels
+```
+
+## Channel List
+
+View all deployments and their configured channels:
+
+```
+/channels - Communication Channels (3)
+
+┌────────────────────────────────────────────────────┐
+│ > production-claude  telegram  users: 123456789    │
+│   staging-test      telegram  users: 987654321    │
+│   dev-instance      No channel                    │
+└────────────────────────────────────────────────────┘
+
+Up/Down: Select | Enter: Details | Esc: Back
+```
+
+## Channel Details
+
+Select a deployment to view complete channel configuration:
+
+```
+/channels - production-claude
+
+┌────────────────────────────────────────────────────┐
+│ Channel Details                                    │
+│                                                    │
+│ Deployment:     production-claude                 │
+│ Channel:        telegram                          │
+│ Bot Token:      1234567890:ABCdef******          │
+│ Allowed Users:  123456789                         │
+└────────────────────────────────────────────────────┘
+
+R: Reveal/hide secrets | Esc: Back to list
+```
+
+### Reveal Secrets
+
+Press `R` to toggle between masked and revealed tokens:
+
+```
+# Masked (default)
+Bot Token: 1234567890:ABCdef******
+
+# Revealed (after pressing R)
+Bot Token: 1234567890:ABCdefGHIjklMNOpqrSTUvwxYZ
+```
+
+<Warning>
+  Be careful when revealing secrets. Ensure no one is looking at your screen, and don't take screenshots with revealed tokens.
+</Warning>
+
+## Channel Types
+
+Currently, ClawControl supports:
+
+### Telegram
+
+Most deployments use Telegram as the primary channel:
+
+```
+Channel:        telegram
+Bot Token:      From @BotFather
+Allowed Users:  Comma-separated Telegram user IDs
+```
+
+**Configuration:**
+- Bot token obtained from [@BotFather](https://t.me/botfather)
+- User IDs control who can interact with the bot
+- Multiple users supported: `123456789,987654321`
+
+## Example Terminal Session
+
+```
+> /channels
+
+/channels - Communication Channels (2)
+
+┌────────────────────────────────────────────────────┐
+│ > production-claude  telegram  users: 123456789    │
+│   staging-test      telegram  users: 987654321    │
+└────────────────────────────────────────────────────┘
+
+[Enter]
+
+/channels - production-claude
+
+┌────────────────────────────────────────────────────┐
+│ Channel Details                                    │
+│                                                    │
+│ Deployment:     production-claude                 │
+│ Channel:        telegram                          │
+│ Bot Token:      1234567890:ABCdef******          │
+│ Allowed Users:  123456789                         │
+└────────────────────────────────────────────────────┘
+
+[Press R]
+
+# Token revealed
+Bot Token: 1234567890:ABCdefGHIjklMNOpqrSTUvwxYZ
+
+[Press R again]
+
+# Token masked
+Bot Token: 1234567890:ABCdef******
+
+[Press Esc]
+
+/channels - Communication Channels (2)
+# Back to list
+```
+
+## Keyboard Navigation
+
+**List View:**
+- **↑/↓** - Navigate between deployments
+- **Enter** - View channel details
+- **Esc** - Return to home
+
+**Detail View:**
+- **R** - Toggle reveal/hide secrets
+- **Esc** - Back to list
+
+## Empty State
+
+If no deployments exist:
+
+```
+/channels - Communication Channels
+
+┌────────────────────────────────────────────────────┐
+│ No deployments found!                              │
+│ Run /new to create a deployment first.             │
+└────────────────────────────────────────────────────┘
+
+Esc: Back
+```
+
+## No Channel Configured
+
+If a deployment has no channel:
+
+```
+/channels - dev-instance
+
+┌────────────────────────────────────────────────────┐
+│ Channel Details                                    │
+│                                                    │
+│ Deployment:     dev-instance                       │
+│                                                    │
+│ No channel configured for this deployment.         │
+└────────────────────────────────────────────────────┘
+
+Esc: Back to list
+```
+
+## Use Cases
+
+### Verify Bot Configuration
+
+After deployment, check the bot token is correct:
+
+```
+> /channels
+# Select deployment
+# Press R to reveal token
+# Verify it matches what you created in @BotFather
+```
+
+### Check Access Control
+
+Verify only authorized users can access:
+
+```
+/channels - production-claude
+
+Allowed Users: 123456789
+
+# Only this Telegram user ID can interact with the bot
+```
+
+### Find Your Bot Token
+
+If you forgot your bot token:
+
+```
+> /channels
+# Select deployment
+# Press R to reveal
+# Copy token if needed
+```
+
+### Multi-User Setup
+
+Check which users have access:
+
+```
+Allowed Users: 123456789,987654321,555666777
+
+# Three users can interact with this bot
+```
+
+## Getting Your Telegram User ID
+
+To find your Telegram user ID:
+
+1. Message [@userinfobot](https://t.me/userinfobot) on Telegram
+2. It will reply with your user ID
+3. Use this ID in deployment configuration
+
+```
+Id: 123456789
+First name: John
+Username: @john_doe
+```
+
+## Security Notes
+
+### Bot Token Security
+
+<Warning>
+  Never share your bot token publicly. Anyone with the token can control your bot.
+</Warning>
+
+- Tokens are masked by default in `/channels`
+- Press `R` only when you need to copy the token
+- Press `R` again to re-mask immediately
+
+### Access Control
+
+- **Allowed Users** list restricts who can interact
+- Empty list = anyone can interact (not recommended)
+- Use specific user IDs for security
+
+### Token Storage
+
+Bot tokens are stored in:
+
+```
+~/.clawcontrol/deployments/{name}/config.json
+```
+
+These files are readable only by your user account.
+
+## Updating Channel Configuration
+
+To change channel settings:
+
+1. Use `/list` to select the deployment
+2. Press `E` to edit
+3. Navigate through the wizard to the Telegram settings
+4. Update bot token or allowed users
+5. Redeploy if the instance is already deployed
+
+## Tips
+
+<Tip>
+  Use `/channels` to quickly reference bot tokens when setting up new Telegram integrations or troubleshooting.
+</Tip>
+
+<Tip>
+  For multi-user bots, maintain a list of authorized user IDs. Add them as comma-separated values: `123,456,789`
+</Tip>
+
+<Note>
+  Channel configuration changes require redeployment to take effect on running instances. Use `/deploy` after editing.
+</Note>
+
+## Common Issues
+
+### Bot Not Responding
+
+**Check:**
+1. Verify bot token is correct
+   ```
+   > /channels
+   # Reveal token
+   # Compare with @BotFather
+   ```
+
+2. Check allowed users includes your ID
+   ```
+   Allowed Users: 123456789
+   # Your ID must be in this list
+   ```
+
+3. Verify OpenClaw is running
+   ```
+   > /status
+   # Check "OpenClaw: Running"
+   ```
+
+### Wrong User ID
+
+If you can't interact with the bot:
+
+```
+# Check your actual Telegram ID
+@userinfobot: Id: 987654321
+
+# Compare with deployment config
+> /channels
+Allowed Users: 123456789  ❌ Wrong!
+
+# Update via /list > Edit
+# Change to: 987654321
+```
+
+### Token Expired or Invalid
+
+If bot doesn't work:
+
+1. Create new bot with [@BotFather](https://t.me/botfather)
+2. Copy new token
+3. Update deployment:
+   ```
+   > /list
+   # Select deployment
+   # Press E to edit
+   # Update token
+   ```
+4. Redeploy:
+   ```
+   > /deploy
+   ```
+
+## Future Channels
+
+ClawControl may support additional channels in future versions:
+
+- **Discord** - Discord bot integration
+- **Slack** - Slack app integration
+- **Web** - Direct web interface
+- **API** - REST API access
+
+Check back for updates!
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="New Command" icon="plus" href="/cli/new">
+    Configure channels for new deployments
+  </Card>
+  <Card title="Status Command" icon="chart-line" href="/cli/status">
+    Verify deployments are running
+  </Card>
+  <Card title="Logs Command" icon="file-lines" href="/cli/logs">
+    Debug channel issues
+  </Card>
+  <Card title="Dashboard Command" icon="browser" href="/cli/dashboard">
+    Alternative to Telegram
+  </Card>
+</CardGroup>

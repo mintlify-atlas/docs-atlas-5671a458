@@ -1,0 +1,369 @@
+---
+title: /help
+description: Show comprehensive help and command reference
+---
+
+The `/help` command displays comprehensive help information about ClawControl, including available commands, workflow guidance, and useful links.
+
+## Usage
+
+```
+/help
+```
+
+## Help Display
+
+```
+/help - ClawControl Help
+
+┌────────────────────────────────────────────────────┐
+│ What is ClawControl?                               │
+│                                                    │
+│ ClawControl is a CLI tool that simplifies          │
+│ deploying OpenClaw instances to cloud providers.   │
+│ It handles all the complex setup including VPS     │
+│ provisioning, Node.js installation, OpenClaw       │
+│ configuration, and Tailscale VPN setup.            │
+└────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────┐
+│ Available Commands                                 │
+│                                                    │
+│ /new         Initialize a new deployment          │
+│              Creates deployment config in          │
+│              ~/.clawcontrol/deployments/           │
+│                                                    │
+│ /deploy      Deploy a configured instance          │
+│              Provisions VPS, installs dependencies │
+│                                                    │
+│ /status      View status of all deployments       │
+│              Shows deployment state, health checks │
+│                                                    │
+│ /ssh         SSH into a deployed instance         │
+│              Opens interactive SSH session         │
+│                                                    │
+│ /logs        View OpenClaw logs                   │
+│              Streams logs from journalctl          │
+│                                                    │
+│ /destroy     Permanently delete a deployment      │
+│              Deletes VPS, SSH keys, config         │
+│                                                    │
+│ /templates   Manage deployment templates          │
+│              View, fork, and use reusable presets  │
+└────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────┐
+│ Typical Workflow                                   │
+│                                                    │
+│ 1. Run /templates to browse or create presets     │
+│ 2. Run /new to create a deployment config         │
+│ 3. Run /deploy to deploy to the cloud             │
+│ 4. Authenticate Tailscale when prompted           │
+│ 5. Complete OpenClaw onboarding via SSH           │
+│ 6. Use /status and /logs to monitor               │
+└────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────┐
+│ Supported Cloud Providers                          │
+│                                                    │
+│ ✓ Hetzner Cloud - ~$4.99/mo (CPX11, US East)     │
+│ ✓ DigitalOcean - Starting at $12/mo (NYC1)       │
+│ ○ Vultr - Coming soon                             │
+└────────────────────────────────────────────────────┘
+
+Useful Links
+• OpenClaw Docs: https://docs.openclaw.ai/
+• Hetzner API: https://docs.hetzner.cloud/
+• Tailscale: https://tailscale.com/
+
+Press any key to return to home
+```
+
+## What You'll Learn
+
+The help screen provides:
+
+### Overview
+- What ClawControl does
+- Why you'd use it
+- What it automates
+
+### Command Reference
+- List of all commands
+- Brief description of each
+- What each command does
+
+### Typical Workflow
+- Step-by-step deployment process
+- Best practices
+- Common patterns
+
+### Supported Providers
+- Which cloud providers work
+- Approximate costs
+- Provider-specific details
+
+### Useful Links
+- OpenClaw documentation
+- Cloud provider docs
+- Related services (Tailscale)
+
+## Example Terminal Session
+
+```
+> /help
+
+/help - ClawControl Help
+
+[Full help display shown]
+
+[Read through information]
+
+[Press any key]
+
+> _
+# Returns to home
+```
+
+## Keyboard Navigation
+
+- **Any Key** - Return to home
+
+## Quick Reference
+
+The help command shows this quick reference:
+
+### Core Commands
+
+```
+/new        Create a deployment
+/deploy     Deploy to cloud
+/status     Check deployments
+/ssh        Connect to server
+/logs       View logs
+/dashboard  Open web UI
+/destroy    Delete deployment
+```
+
+### Management Commands
+
+```
+/templates  Manage templates
+/channels   View channel config
+/help       Show this help
+```
+
+## Getting Help
+
+For more detailed help:
+
+### Command-Specific Help
+
+Each command shows contextual help:
+
+```
+# Example: /new shows help text at each step
+Step 1: Deployment Name
+Enter a unique name (lowercase, alphanumeric, hyphens allowed)
+```
+
+### Online Documentation
+
+Full documentation available at:
+- **ClawControl Docs**: [GitHub README](https://github.com/ipenywis/clawcontrol)
+- **OpenClaw Docs**: [docs.openclaw.ai](https://docs.openclaw.ai/)
+
+### Community Support
+
+- **GitHub Issues**: [Report bugs or ask questions](https://github.com/ipenywis/clawcontrol/issues)
+- **Discussions**: [Community forum](https://github.com/ipenywis/clawcontrol/discussions)
+
+## Tips
+
+<Tip>
+  Run `/help` when you need a quick reminder of available commands. It's faster than searching through documentation.
+</Tip>
+
+<Tip>
+  The help screen is read-only and safe. You can press any key to exit without affecting your deployments.
+</Tip>
+
+## Additional Resources
+
+### OpenClaw Documentation
+
+Learn about OpenClaw itself:
+- AI agent capabilities
+- Tool system
+- Configuration options
+- API reference
+
+Visit: [docs.openclaw.ai](https://docs.openclaw.ai/)
+
+### Hetzner Cloud
+
+Learn about Hetzner:
+- Server types and pricing
+- API documentation
+- Network configuration
+- Support resources
+
+Visit: [docs.hetzner.cloud](https://docs.hetzner.cloud/)
+
+### Tailscale
+
+Learn about Tailscale VPN:
+- How Tailscale works
+- Security model
+- Network configuration
+- Access control
+
+Visit: [tailscale.com/kb](https://tailscale.com/kb/)
+
+### DigitalOcean
+
+Learn about DigitalOcean:
+- Droplet sizes and pricing
+- API documentation
+- Networking
+- Monitoring
+
+Visit: [docs.digitalocean.com](https://docs.digitalocean.com/)
+
+## Workflow Guidance
+
+The help screen includes a typical workflow:
+
+### First-Time Setup
+
+1. **Prepare**
+   - Get Hetzner or DigitalOcean API key
+   - Get AI provider API key (Anthropic, OpenAI, etc.)
+   - Create Telegram bot with @BotFather
+   - Get your Telegram user ID from @userinfobot
+
+2. **Create Deployment**
+   ```
+   > /new
+   # Follow wizard
+   ```
+
+3. **Deploy**
+   ```
+   > /deploy
+   # Wait for provisioning
+   # Authenticate Tailscale
+   # Complete onboarding
+   ```
+
+4. **Verify**
+   ```
+   > /status
+   # Run health check
+   ```
+
+5. **Use**
+   - Message your Telegram bot
+   - Or use `/dashboard` for web UI
+
+### Ongoing Usage
+
+```
+# Check status
+> /status
+
+# View logs
+> /logs
+
+# Connect for maintenance
+> /ssh
+
+# Open dashboard
+> /dashboard
+```
+
+## Version Information
+
+The help command doesn't show version information. To see the version:
+
+```bash
+clawcontrol --version
+```
+
+Output:
+```
+clawcontrol v0.2.3
+```
+
+## Common Questions
+
+### How do I start?
+
+```
+1. Run: clawcontrol
+2. Type: /new
+3. Follow the wizard
+4. Type: /deploy
+```
+
+### What does it cost?
+
+Cloud costs:
+- **Hetzner CPX11**: ~$4.99/month
+- **DigitalOcean Basic**: $12+/month
+
+AI API costs:
+- Depends on usage and provider
+- Claude: ~$3-15 per million tokens
+- GPT-4: ~$2.50-10 per million tokens
+
+### Is it secure?
+
+- SSH keys are unique per deployment
+- Tailscale adds VPN layer
+- Telegram bot access controlled by user ID
+- All credentials stored locally only
+
+### Can I manage multiple deployments?
+
+Yes! Create as many as you need:
+
+```
+> /new
+Name: production
+
+> /new  
+Name: staging
+
+> /new
+Name: development
+```
+
+### How do I update OpenClaw?
+
+SSH into the server and update:
+
+```bash
+> /ssh
+root@server:~# npm install -g @openclaw/core@latest
+root@server:~# systemctl restart openclaw
+```
+
+## Next Steps
+
+After reading help:
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/cli/overview">
+    Get started with ClawControl
+  </Card>
+  <Card title="New Command" icon="plus" href="/cli/new">
+    Create your first deployment
+  </Card>
+  <Card title="Templates" icon="layer-group" href="/cli/templates">
+    Use pre-built configurations
+  </Card>
+  <Card title="Options" icon="gear" href="/cli/options">
+    CLI flags and options
+  </Card>
+</CardGroup>

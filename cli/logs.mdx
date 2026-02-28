@@ -1,0 +1,373 @@
+---
+title: /logs
+description: View OpenClaw logs from a deployment
+---
+
+The `/logs` command displays OpenClaw service logs from a deployed instance. It fetches logs from the systemd journal and provides real-time monitoring capabilities.
+
+## Usage
+
+```
+/logs
+```
+
+## Log Viewing Process
+
+### 1. Select Deployment
+
+Choose which deployment to view logs from:
+
+```
+/logs - Select a deployment
+
+┌────────────────────────────────────────────┐
+│ > production-claude    203.0.113.45        │
+│   staging-test        198.51.100.23        │
+└────────────────────────────────────────────┘
+
+Arrow keys to select | Enter to view logs | Esc to go back
+```
+
+### 2. Loading Logs
+
+```
+Loading logs...
+Fetching OpenClaw logs from server...
+```
+
+### 3. Log Display
+
+View the most recent 200 log lines:
+
+```
+Logs: production-claude | Auto: OFF | Fetched: 2:45:30 PM
+
+┌────────────────────────────────────────────────────────────────┐
+│ Feb 28 14:30:15 OpenClaw agent starting...                     │
+│ Feb 28 14:30:16 Connected to Anthropic API                     │
+│ Feb 28 14:30:17 Telegram bot initialized                       │
+│ Feb 28 14:30:18 Gateway listening on port 18789                │
+│ Feb 28 14:35:22 Received message from user 123456789           │
+│ Feb 28 14:35:23 Processing command: /help                      │
+│ Feb 28 14:35:25 Response sent                                  │
+│ Feb 28 14:40:01 Health check: OK                               │
+│ Feb 28 14:45:15 Memory usage: 456MB / 2GB                      │
+└────────────────────────────────────────────────────────────────┘
+
+R: Refresh | A: Toggle auto-refresh | Esc: Back | Showing last 200 lines
+```
+
+## Log Features
+
+### Color-Coded Levels
+
+Logs are automatically color-coded by severity:
+
+- **Error** (Red): Critical errors and failures
+- **Warning** (Yellow): Warnings and potential issues
+- **Info** (Default): Normal operational messages
+- **Debug** (Gray): Detailed debugging information
+
+### Manual Refresh
+
+Press `R` to fetch fresh logs:
+
+```
+Logs: production-claude | Auto: OFF | Fetched: 2:46:15 PM
+
+[Latest logs appear]
+```
+
+### Auto-Refresh Mode
+
+Press `A` to enable automatic refresh every 5 seconds:
+
+```
+Logs: production-claude | Auto: ON (5s) | Fetched: 2:46:20 PM
+
+[Logs automatically update every 5 seconds]
+```
+
+Press `A` again to disable:
+
+```
+Logs: production-claude | Auto: OFF | Fetched: 2:46:45 PM
+```
+
+## Log Format
+
+Logs follow the systemd journal format:
+
+```
+Feb 28 14:30:15 hostname openclaw[pid]: message
+```
+
+ClawControl parses and displays:
+
+```
+Feb 28 14:30:15 message
+```
+
+## Example Log Output
+
+### Startup Logs
+
+```
+Feb 28 10:45:00 OpenClaw agent starting (v1.2.3)
+Feb 28 10:45:01 Environment: production
+Feb 28 10:45:01 Configuration loaded from /root/.openclaw/config.json
+Feb 28 10:45:02 AI Provider: anthropic (claude-sonnet-4-20250514)
+Feb 28 10:45:03 Channel: telegram (bot @my_openclaw_bot)
+Feb 28 10:45:04 Gateway server started on port 18789
+Feb 28 10:45:05 OpenClaw is ready
+```
+
+### Normal Operation
+
+```
+Feb 28 11:23:45 [Telegram] Message received from user 123456789
+Feb 28 11:23:46 [Agent] Processing user request
+Feb 28 11:23:47 [AI] Sending prompt to Anthropic API
+Feb 28 11:23:49 [AI] Received response (156 tokens)
+Feb 28 11:23:50 [Agent] Executing tool: bash
+Feb 28 11:23:51 [Tool] Command completed successfully
+Feb 28 11:23:52 [Telegram] Response sent to user
+```
+
+### Error Logs
+
+```
+Feb 28 12:15:30 ERROR: Failed to connect to AI provider
+Feb 28 12:15:30 Error: ECONNREFUSED
+Feb 28 12:15:30 Retrying in 5 seconds...
+Feb 28 12:15:35 Connection established
+```
+
+### Warning Logs
+
+```
+Feb 28 13:45:12 WARN: High memory usage detected (1.8GB / 2GB)
+Feb 28 13:45:12 WARN: Consider upgrading server size
+Feb 28 13:45:15 Memory usage normal (1.2GB / 2GB)
+```
+
+## Terminal Session Example
+
+```
+> /logs
+
+/logs - Select a deployment
+
+┌────────────────────────────────────────────┐
+│ > production-claude    203.0.113.45        │
+└────────────────────────────────────────────┘
+
+[Enter]
+
+Loading logs...
+
+Logs: production-claude | Auto: OFF | Fetched: 2:47:10 PM
+
+┌────────────────────────────────────────────────────────────────┐
+│ Feb 28 14:30:15 OpenClaw agent starting...                     │
+│ Feb 28 14:30:16 Connected to Anthropic API                     │
+│ Feb 28 14:35:22 Received message from user 123456789           │
+│ Feb 28 14:40:01 Health check: OK                               │
+└────────────────────────────────────────────────────────────────┘
+
+[Press R]
+
+Fetching logs...
+
+Logs: production-claude | Auto: OFF | Fetched: 2:47:15 PM
+
+[Updated logs appear]
+
+[Press A]
+
+Logs: production-claude | Auto: ON (5s) | Fetched: 2:47:20 PM
+
+[Logs refresh automatically every 5 seconds]
+
+[Press Esc]
+
+> _
+```
+
+## Keyboard Controls
+
+- **R** - Refresh logs manually
+- **A** - Toggle auto-refresh (5 second interval)
+- **Esc** - Return to home
+- **↑/↓** - Scroll through logs (in selection view)
+- **Enter** - Load logs for selected deployment
+
+## Empty State
+
+If no deployed instances exist:
+
+```
+/logs - View deployment logs
+
+┌────────────────────────────────────────────┐
+│ No deployed instances found!               │
+│ Deploy an instance first with /deploy      │
+└────────────────────────────────────────────┘
+
+Press any key to return to home
+```
+
+## Error Handling
+
+### Connection Failed
+
+```
+Error Loading Logs
+
+┌────────────────────────────────────────────┐
+│ Failed to fetch logs: Connection timeout   │
+└────────────────────────────────────────────┘
+
+Press any key to go back
+```
+
+**Solutions:**
+1. Check server is running: `/status`
+2. Verify SSH connectivity: `/ssh`
+3. Check firewall rules
+
+### Service Not Running
+
+```
+Feb 28 15:00:00 ERROR: Service openclaw not found
+```
+
+**Solutions:**
+1. SSH into server: `/ssh`
+2. Check service status: `systemctl status openclaw`
+3. Start service: `systemctl start openclaw`
+
+## Advanced Log Analysis
+
+For detailed log analysis, use SSH:
+
+### View Full Logs
+
+```bash
+root@server:~# journalctl -u openclaw --no-pager
+```
+
+### Filter by Time
+
+```bash
+root@server:~# journalctl -u openclaw --since "1 hour ago"
+root@server:~# journalctl -u openclaw --since "2026-02-28 14:00:00"
+```
+
+### Filter by Level
+
+```bash
+root@server:~# journalctl -u openclaw -p err
+# Only errors
+
+root@server:~# journalctl -u openclaw -p warning
+# Warnings and above
+```
+
+### Follow Logs in Real-Time
+
+```bash
+root@server:~# journalctl -u openclaw -f
+# Similar to 'tail -f'
+```
+
+### Export Logs
+
+```bash
+root@server:~# journalctl -u openclaw > openclaw.log
+root@server:~# journalctl -u openclaw --since "today" > openclaw-today.log
+```
+
+### Search Logs
+
+```bash
+root@server:~# journalctl -u openclaw | grep ERROR
+root@server:~# journalctl -u openclaw | grep "user 123456789"
+```
+
+## Log Rotation
+
+Systemd automatically rotates logs. Configure retention:
+
+```bash
+root@server:~# vim /etc/systemd/journald.conf
+
+SystemMaxUse=500M
+SystemMaxFileSize=50M
+MaxRetentionSec=7day
+
+root@server:~# systemctl restart systemd-journald
+```
+
+## Tips
+
+<Tip>
+  Use auto-refresh mode when actively troubleshooting issues. Turn it off when done to reduce server load.
+</Tip>
+
+<Tip>
+  For long-term log analysis, use `/ssh` and journalctl's advanced filtering options rather than viewing logs in ClawControl.
+</Tip>
+
+<Note>
+  ClawControl displays the last 200 lines by default. For complete logs, use SSH and journalctl directly.
+</Note>
+
+## Common Log Patterns
+
+### Successful User Interaction
+
+```
+[Telegram] Message received
+[Agent] Processing
+[AI] Sending prompt
+[AI] Received response
+[Tool] Executing
+[Tool] Completed
+[Telegram] Response sent
+```
+
+### API Rate Limit
+
+```
+ERROR: Rate limit exceeded
+WARN: Waiting 60 seconds before retry
+Retrying request...
+Connection established
+```
+
+### Memory Issues
+
+```
+WARN: High memory usage (1.8GB / 2GB)
+WARN: Running garbage collection
+Memory freed: 400MB
+Memory usage normal
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="SSH Command" icon="terminal" href="/cli/ssh">
+    Advanced log analysis
+  </Card>
+  <Card title="Status Command" icon="chart-line" href="/cli/status">
+    Check deployment health
+  </Card>
+  <Card title="Dashboard Command" icon="browser" href="/cli/dashboard">
+    Web-based monitoring
+  </Card>
+  <Card title="Deploy Command" icon="rocket" href="/cli/deploy">
+    Restart failed services
+  </Card>
+</CardGroup>

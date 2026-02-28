@@ -1,0 +1,249 @@
+---
+title: /status
+description: View status and health of all deployments
+---
+
+The `/status` command displays detailed information about all your deployments, including connection details, health checks, and deployment history.
+
+## Usage
+
+```
+/status
+```
+
+## Status Display
+
+View all deployments with their current states:
+
+```
+/status - Deployment Status
+
+Deployments (3)
+┌────────────────────────────────────────────┐
+│ > production-claude    [deployed]          │
+│   staging-test        [deployed]           │
+│   dev-instance        [not_deployed]       │
+└────────────────────────────────────────────┘
+```
+
+## Deployment Details
+
+Select a deployment to view comprehensive details:
+
+```
+Details: production-claude
+
+Status:         deployed
+Provider:       hetzner
+Server IP:      203.0.113.45
+Tailscale IP:   100.64.0.12
+Created:        2/28/2026, 10:30:15 AM
+Deployed:       2/28/2026, 10:42:33 AM
+```
+
+## Health Checks
+
+Press Enter on a selected deployment to run health checks:
+
+```
+Details: production-claude
+
+Status:         deployed
+Provider:       hetzner
+Server IP:      203.0.113.45
+Tailscale IP:   100.64.0.12
+
+Health Check:
+SSH:            Connected
+OpenClaw:       Running
+Last checked:   2:45:30 PM
+
+Checkpoints: 12 completed
+
+Up/Down: Select | Enter: Health check | Esc: Back
+```
+
+### Health Check Results
+
+- **SSH: Connected** - Server is reachable via SSH
+- **SSH: Unreachable** - Cannot connect (server may be down)
+- **OpenClaw: Running** - Service is active and running
+- **OpenClaw: Not running** - Service is stopped or crashed
+
+## Deployment States
+
+Possible deployment states:
+
+- `not_deployed` - Configuration created but not deployed
+- `deploying` - Currently being deployed
+- `deployed` - Successfully deployed and running
+- `failed` - Deployment failed (shows last error)
+
+## Checkpoints
+
+Each deployment tracks completed checkpoints:
+
+```
+Checkpoints: 12 completed
+```
+
+Checkpoints allow resuming failed deployments from the last successful step.
+
+## Error Display
+
+If a deployment has errors:
+
+```
+Details: staging-test
+
+Status:         failed
+Provider:       digitalocean
+Server IP:      Not deployed
+Last Error:     Connection timeout at checkpoint: wait_for_ssh
+```
+
+## Example Terminal Output
+
+```
+> /status
+
+/status - Deployment Status
+
+Deployments (2)
+┌────────────────────────────────────────────┐
+│ > production-claude    [deployed]          │
+│   dev-test           [not_deployed]        │
+└────────────────────────────────────────────┘
+
+Details: production-claude
+
+Status:         deployed
+Provider:       hetzner
+Server IP:      203.0.113.45
+Tailscale IP:   100.64.0.12
+Created:        2/28/2026, 10:30:15 AM
+Deployed:       2/28/2026, 10:42:33 AM
+
+[Press Enter to run health check]
+
+Checking health...
+
+Health Check:
+SSH:            Connected
+OpenClaw:       Running
+Last checked:   2:47:10 PM
+
+Up/Down: Select | Enter: Health check | Esc: Back
+```
+
+## Keyboard Navigation
+
+- **↑/↓** - Navigate between deployments
+- **Enter** - Run health check on selected deployment
+- **Esc** - Return to home
+
+## Empty State
+
+If no deployments exist:
+
+```
+/status - Deployment Status
+
+┌────────────────────────────────────────────┐
+│ No deployments found!                      │
+│ Run /new to create a deployment.           │
+└────────────────────────────────────────────┘
+
+Press any key to return to home
+```
+
+## Use Cases
+
+### Quick Health Check
+
+1. Run `/status`
+2. Press Enter on a deployment
+3. Wait for health check results
+
+### Monitor Multiple Deployments
+
+1. Run `/status`
+2. Use arrow keys to navigate between deployments
+3. Press Enter to check health of each
+4. Compare results
+
+### Troubleshooting
+
+1. Run `/status`
+2. Check "Last Error" field for failed deployments
+3. Note the checkpoint where failure occurred
+4. Run `/deploy` to resume from that checkpoint
+
+## Integration with Other Commands
+
+### After Deployment
+
+```bash
+# Deploy
+> /deploy
+# [Deployment completes]
+
+# Check status
+> /status
+# Verify deployment is marked as 'deployed'
+# Run health check to confirm services are running
+```
+
+### Before Destroying
+
+```bash
+# Check what's deployed
+> /status
+
+# Note server IP and Tailscale IP
+# Verify you're destroying the correct deployment
+
+> /destroy
+```
+
+## Tips
+
+<Tip>
+  Run periodic health checks to ensure your OpenClaw instances are healthy. The health check validates both SSH connectivity and OpenClaw service status.
+</Tip>
+
+<Note>
+  Health checks connect to your server over SSH. This may take a few seconds depending on network latency and server load.
+</Note>
+
+## Status Information Reference
+
+| Field | Description |
+|-------|-------------|
+| Status | Current state of deployment |
+| Provider | Cloud provider (hetzner, digitalocean) |
+| Server IP | Public IPv4 address |
+| Tailscale IP | Private VPN address (if configured) |
+| Created | When configuration was created |
+| Deployed | When deployment completed successfully |
+| Last Error | Most recent error message (if any) |
+| SSH | SSH connectivity status |
+| OpenClaw | Service running status |
+| Checkpoints | Number of completed deployment steps |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="SSH Command" icon="terminal" href="/cli/ssh">
+    Connect to healthy deployments
+  </Card>
+  <Card title="Logs Command" icon="file-lines" href="/cli/logs">
+    View detailed logs
+  </Card>
+  <Card title="Dashboard Command" icon="browser" href="/cli/dashboard">
+    Access web interface
+  </Card>
+  <Card title="Deploy Command" icon="rocket" href="/cli/deploy">
+    Resume failed deployments
+  </Card>
+</CardGroup>

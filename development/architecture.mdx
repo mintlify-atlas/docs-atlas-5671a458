@@ -1,0 +1,390 @@
+---
+title: Architecture
+description: Understanding ClawControl's codebase structure and design
+---
+
+## Project Structure
+
+ClawControl is organized into distinct layers that separate concerns:
+
+```
+src/
+├── index.tsx              # Entry point and CLI initialization
+├── App.tsx                # Root component with routing and state
+├── theme.ts               # Color scheme and styling
+├── components/            # TUI view components
+│   ├── Home.tsx           # Command palette home screen
+│   ├── NewDeployment.tsx  # Deployment creation wizard
+│   ├── DeployView.tsx     # Deployment confirmation
+│   ├── DeployingView.tsx  # Live deployment progress
+│   ├── StatusView.tsx     # Deployment status dashboard
+│   ├── ListView.tsx       # List all deployments
+│   ├── SSHView.tsx        # SSH connection interface
+│   ├── LogsView.tsx       # Log streaming view
+│   ├── DashboardView.tsx  # Open dashboard in browser
+│   ├── DestroyView.tsx    # Destroy deployment flow
+│   ├── TemplatesView.tsx  # Template management
+│   ├── ChannelsView.tsx   # Channel configuration
+│   └── HelpView.tsx       # Help and documentation
+├── services/              # Business logic and utilities
+│   ├── config.ts          # Deployment config management
+│   ├── deployment.ts      # Deployment orchestration
+│   ├── secrets.ts         # Secure API key storage
+│   ├── ssh.ts             # SSH client and operations
+│   ├── templates.ts       # Template CRUD operations
+│   ├── tunnel.ts          # Tailscale tunnel management
+│   └── setup/             # Server provisioning steps
+├── providers/             # Cloud provider integrations
+│   ├── index.ts           # Provider registry and constants
+│   ├── hetzner/
+│   │   ├── index.ts       # Hetzner provider implementation
+│   │   └── api.ts         # Hetzner Cloud API client
+│   └── digitalocean/
+│       ├── index.ts       # DigitalOcean provider implementation
+│       └── api.ts         # DigitalOcean API client
+├── types/
+│   └── index.ts           # TypeScript types and Zod schemas
+└── utils/
+    └── ...                # Shared utilities
+```
+
+## TUI Framework
+
+ClawControl uses **[@opentui/core](https://github.com/opentui/opentui)** and **[@opentui/react](https://github.com/opentui/opentui)** to build a terminal-based user interface with React.
+
+### How It Works
+
+The TUI framework provides JSX components that render to the terminal:
+
+```tsx
+<box flexDirection="column" width="100%">
+  <text fg="#00ff00">Hello, Terminal!</text>
+  <input
+    value={inputValue}
+    onChange={setInputValue}
+    placeholder="Type here..."
+  />
+</box>
+```
+
+Available primitive components:
+- `<box>` - Container with flexbox layout
+- `<scrollbox>` - Scrollable container
+- `<text>` - Styled text with foreground/background colors
+- `<input>` - Text input field
+- `<textarea>` - Multi-line text input
+- `<button>` - Interactive button
+
+### Entry Point
+
+The application initializes the TUI renderer in `src/index.tsx`:
+
+```tsx
+import { createCliRenderer } from "@opentui/core";
+import { createRoot } from "@opentui/react";
+import { App } from "./App.js";
+
+const renderer = await createCliRenderer({
+  useMouse: true,  // Enable mouse support
+});
+const root = createRoot(renderer);
+root.render(<App />);
+```
+
+### Hooks
+
+OpenTUI React provides hooks for terminal interactions:
+
+- `useRenderer()` - Access the underlying renderer
+- `useKeyboard(callback)` - Listen for keyboard events
+- `useFocus()` - Manage focus state
+
+Example from `src/components/Home.tsx`:
+
+```tsx
+import { useKeyboard } from "@opentui/react";
+
+useKeyboard((key) => {
+  if (key.name === "down") {
+    setSelectedIndex((prev) => prev + 1);
+  } else if (key.name === "up") {
+    setSelectedIndex((prev) => prev - 1);
+  } else if (key.name === "tab") {
+    handleCommand(filteredCommands[selectedIndex].name);
+  }
+});
+```
+
+## View System
+
+ClawControl uses a view-based navigation system managed by the root `App` component.
+
+### App Component
+
+The `App` component (`src/App.tsx`) manages:
+
+1. **Current view state** - Which screen is currently displayed
+2. **Selected deployment** - The active deployment context
+3. **Deployments list** - All saved deployments
+4. **Navigation** - Route between views
+
+```tsx
+const [currentView, setCurrentView] = useState<ViewName>("home");
+const [selectedDeployment, setSelectedDeployment] = useState<string | null>(null);
+const [deployments, setDeployments] = useState<Deployment[]>(() => {
+  return getAllDeployments();
+});
+
+const navigateTo = useCallback((view: ViewName, deployment?: string) => {
+  if (deployment !== undefined) {
+    setSelectedDeployment(deployment);
+  }
+  setCurrentView(view);
+  refreshDeployments();
+}, [refreshDeployments]);
+```
+
+### AppContext
+
+All views receive an `AppContext` prop that provides shared state and navigation:
+
+```typescript
+export interface AppContext {
+  navigateTo: (view: ViewName, deployment?: string) => void;
+  selectedDeployment: string | null;
+  deployments: Deployment[];
+  refreshDeployments: () => void;
+  selectedTemplate: Template | null;
+  setSelectedTemplate: (template: Template | null) => void;
+  editingDeployment: EditingDeployment | null;
+  setEditingDeployment: (ed: EditingDeployment | null) => void;
+}
+```
+
+### View Types
+
+Views are defined by the `ViewName` type in `src/types/index.ts`:
+
+```typescript
+export type ViewName =
+  | "home"        // Command palette
+  | "new"         // Create deployment
+  | "list"        // List deployments
+  | "deploy"      // Confirm deployment
+  | "deploying"   // Deployment in progress
+  | "status"      // Status dashboard
+  | "ssh"         // SSH connection
+  | "logs"        // Log streaming
+  | "dashboard"   // Open dashboard
+  | "destroy"     // Destroy deployment
+  | "help"        // Help screen
+  | "templates"   // Manage templates
+  | "channels";   // Channel config
+```
+
+### View Rendering
+
+The `App` component maps view names to components:
+
+```tsx
+const renderView = () => {
+  switch (currentView) {
+    case "home":
+      return <Home context={context} />;
+    case "new":
+      return <NewDeployment context={context} />;
+    case "deploy":
+      return <DeployView context={context} />;
+    // ... other views
+    default:
+      return <Home context={context} />;
+  }
+};
+```
+
+## Key Modules
+
+### Services Layer
+
+The `src/services/` directory contains all business logic:
+
+#### config.ts (src/services/config.ts)
+
+Manages deployment configuration storage:
+
+- `getAllDeployments()` - Load all deployments from disk
+- `getDeployment(name)` - Get a specific deployment
+- `saveDeploymentConfig(name, config)` - Save deployment config
+- `saveDeploymentState(name, state)` - Save deployment state
+- `deleteDeployment(name)` - Remove a deployment
+
+Configuration is stored in `~/.clawcontrol/deployments/{name}/`:
+- `config.json` - Deployment configuration (provider, settings, etc.)
+- `state.json` - Deployment state (status, IPs, checkpoints, etc.)
+- `id_rsa` / `id_rsa.pub` - SSH key pair
+
+#### deployment.ts (src/services/deployment.ts)
+
+Orchestrates the full deployment process:
+
+- `runDeployment(deploymentName)` - Execute deployment from start to finish
+- Handles checkpointing for resume-on-failure
+- Manages deployment phases:
+  1. Server provisioning
+  2. SSH setup
+  3. System updates
+  4. Dependency installation (Node, pnpm, Chrome)
+  5. OpenClaw installation and configuration
+  6. Tailscale setup
+  7. Daemon startup
+
+#### ssh.ts (src/services/ssh.ts)
+
+SSH client operations using the `ssh2` library:
+
+- `connectSSH(host, keyPath)` - Establish SSH connection
+- `executeCommand(conn, command)` - Run a command over SSH
+- `uploadFile(conn, localPath, remotePath)` - Upload files via SFTP
+- `streamLogs(conn, logPath, callback)` - Stream logs in real-time
+
+#### secrets.ts (src/services/secrets.ts)
+
+Secure storage for reusable API keys:
+
+- `loadSecrets()` - Load saved secrets from `~/.clawcontrol/secrets.json`
+- `saveSecret(id, name, value)` - Save a new secret
+- `deleteSecret(id)` - Remove a secret
+
+### Providers Layer
+
+The `src/providers/` directory contains cloud provider integrations.
+
+#### Provider Interface
+
+Each provider implements a consistent interface:
+
+```typescript
+export interface ProviderClient {
+  validateAPIKey(): Promise<boolean>;
+  createServer(config: ServerConfig): Promise<Server>;
+  getServer(id: string): Promise<Server>;
+  deleteServer(id: string): Promise<void>;
+  createSSHKey(name: string, publicKey: string): Promise<SSHKey>;
+  deleteSSHKey(id: string): Promise<void>;
+}
+```
+
+#### Hetzner Provider (src/providers/hetzner/)
+
+- `HetznerClient` - API client for Hetzner Cloud
+- `createServer()` - Provisions a CX11 or CPX11 server
+- `waitForServerRunning()` - Polls until server is ready
+- Supports locations: `ash` (Ashburn), `fsn1` (Falkenstein), `nbg1` (Nuremberg), etc.
+
+API endpoint: `https://api.hetzner.cloud/v1/`
+
+#### DigitalOcean Provider (src/providers/digitalocean/)
+
+- `DigitalOceanClient` - API client for DigitalOcean
+- `createDroplet()` - Provisions a droplet
+- `waitForDropletActive()` - Polls until droplet is ready
+- Supports sizes: `s-1vcpu-2gb`, `s-2vcpu-4gb`, etc.
+
+API endpoint: `https://api.digitalocean.com/v2/`
+
+### Type System
+
+The `src/types/index.ts` file defines all TypeScript types and Zod validation schemas.
+
+#### Core Types
+
+```typescript
+export type Provider = "hetzner" | "digitalocean" | "vultr";
+
+export type DeploymentStatus =
+  | "initialized"   // Config created, not yet deployed
+  | "provisioning"  // Server being created
+  | "configuring"   // Installing dependencies
+  | "deployed"      // Fully deployed and running
+  | "failed"        // Deployment failed
+  | "updating";     // Being updated
+
+export interface Deployment {
+  config: DeploymentConfig;  // User configuration
+  state: DeploymentState;    // Runtime state
+  sshKeyPath: string;        // Path to SSH key
+}
+```
+
+#### Zod Schemas
+
+All types have corresponding Zod schemas for runtime validation:
+
+```typescript
+export const DeploymentConfigSchema = z.object({
+  name: z.string().min(1, "Deployment name is required"),
+  provider: ProviderSchema,
+  createdAt: z.string(),
+  hetzner: HetznerConfigSchema.optional(),
+  digitalocean: DigitalOceanConfigSchema.optional(),
+  openclawConfig: OpenClawConfigSchema,
+  openclawAgent: OpenClawAgentConfigSchema.optional(),
+  skipTailscale: z.boolean().optional(),
+});
+```
+
+This ensures type safety at both compile-time and runtime.
+
+## Binary Wrapper
+
+The `bin/clawcontrol.js` file is a Node.js wrapper that:
+
+1. **Checks for updates** - Fetches the latest version from npm
+2. **Auto-updates** - Runs `bun add -g clawcontrol@latest` if newer version available
+3. **Delegates to Bun** - Executes `dist/index.js` with the Bun runtime
+
+```javascript
+execFileSync("bun", [script, ...args], {
+  stdio: "inherit",
+});
+```
+
+This allows ClawControl to be installed via npm/pnpm while still using Bun at runtime.
+
+## Data Flow
+
+### Creating a Deployment
+
+1. User runs `/new` command
+2. `NewDeployment` component collects configuration
+3. `saveDeploymentConfig()` writes to `~/.clawcontrol/deployments/{name}/config.json`
+4. Initial state is saved with status "initialized"
+
+### Running a Deployment
+
+1. User runs `/deploy` command
+2. `DeployView` confirms the configuration
+3. `runDeployment()` starts the orchestration:
+   - Creates server via provider API
+   - Waits for server to be ready
+   - Generates SSH key pair
+   - Connects over SSH
+   - Executes provisioning steps sequentially
+   - Each step saves a checkpoint on success
+4. `DeployingView` displays real-time progress
+5. Final state is saved with status "deployed"
+
+### Resume on Failure
+
+If deployment fails:
+
+1. The last successful checkpoint is saved in `state.json`
+2. User can re-run `/deploy`
+3. `runDeployment()` resumes from the last checkpoint
+4. Failed steps are retried
+
+## Next Steps
+
+- Set up your [Development Environment](/development/setup)
+- Learn about [Testing](/development/testing) practices
+- Explore the [CLI Reference](/cli/overview) for command documentation

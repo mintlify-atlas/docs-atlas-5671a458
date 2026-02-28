@@ -1,0 +1,463 @@
+---
+title: 'Monitoring Logs'
+description: 'View and troubleshoot OpenClaw logs from ClawControl'
+---
+
+ClawControl provides built-in log viewing to help you monitor and troubleshoot your OpenClaw deployments without leaving the CLI.
+
+## Quick Log Access
+
+<Steps>
+  <Step title="Open logs viewer">
+    From ClawControl's main menu:
+    
+    ```bash
+    /logs
+    ```
+    
+    Select a deployed instance:
+    
+    ```
+    /logs - Select a deployment
+    
+    > my-openclaw-server     159.89.123.45
+      prod-server            142.93.45.67
+    
+    Arrow keys to select | Enter to view logs | Esc to go back
+    ```
+  </Step>
+
+  <Step title="View logs">
+    Press Enter to load logs. ClawControl connects via SSH and fetches the last 200 log lines:
+    
+    ```
+    Logs: my-openclaw-server | Auto: OFF | Fetched: 3:45:23 PM
+    
+    Jan 15 14:45:23 OpenClaw agent started
+    Jan 15 14:45:24 Connected to Telegram
+    Jan 15 14:45:25 AI provider: openrouter
+    Jan 15 14:45:26 Model: moonshotai/kimi-k2.5
+    Jan 15 14:45:27 Gateway listening on port 18789
+    Jan 15 14:46:01 New message from user 123456789
+    Jan 15 14:46:03 Generated response (245 tokens)
+    Jan 15 14:46:04 Sent response to Telegram
+    
+    R: Refresh | A: Toggle auto-refresh | Esc: Back
+    Showing last 200 lines
+    ```
+  </Step>
+
+  <Step title="Refresh logs">
+    Press `R` to manually refresh and fetch new log entries.
+    
+    Press `A` to enable auto-refresh (every 5 seconds):
+    
+    ```
+    Logs: my-openclaw-server | Auto: ON (5s) | Fetched: 3:45:28 PM
+    ```
+  </Step>
+</Steps>
+
+## Understanding Log Entries
+
+OpenClaw logs use journalctl format:
+
+```
+Jan 15 14:45:23 hostname openclaw[1234]: OpenClaw agent started
+│              │        │        │      │
+│              │        │        │      └─ Log message
+│              │        │        └─ Process ID
+│              │        └─ Service name
+│              └─ Hostname
+└─ Timestamp (month day time)
+```
+
+### Log Levels
+
+Logs are color-coded by severity:
+
+- **Info** (white): Normal operations
+  ```
+  Jan 15 14:45:23 Gateway listening on port 18789
+  ```
+
+- **Debug** (gray): Detailed diagnostic information
+  ```
+  Jan 15 14:45:24 DEBUG: Initializing Telegram client
+  ```
+
+- **Warning** (yellow): Potential issues
+  ```
+  Jan 15 14:46:15 Warning: Rate limit approaching
+  ```
+
+- **Error** (red): Failures and errors
+  ```
+  Jan 15 14:47:32 Error: Failed to connect to AI provider
+  ```
+
+## Common Log Patterns
+
+### Startup Sequence
+
+Normal OpenClaw startup:
+
+```
+Jan 15 14:45:23 OpenClaw agent started
+Jan 15 14:45:24 Loading configuration from /root/.openclaw/config.json
+Jan 15 14:45:24 AI Provider: openrouter
+Jan 15 14:45:24 Model: moonshotai/kimi-k2.5
+Jan 15 14:45:25 Connecting to Telegram...
+Jan 15 14:45:26 Connected to Telegram as @my_bot
+Jan 15 14:45:27 Gateway server listening on 0.0.0.0:18789
+Jan 15 14:45:27 OpenClaw ready
+```
+
+### Message Processing
+
+```
+Jan 15 15:30:12 New message from user 123456789: "Hello"
+Jan 15 15:30:13 Generating response...
+Jan 15 15:30:14 OpenRouter request: moonshotai/kimi-k2.5
+Jan 15 15:30:16 Response received (142 tokens)
+Jan 15 15:30:16 Sent response to Telegram
+```
+
+### Error Examples
+
+**API Key Invalid:**
+```
+Jan 15 15:45:23 Error: AI provider authentication failed
+Jan 15 15:45:23 Check your API key configuration
+```
+
+**Network Error:**
+```
+Jan 15 16:12:45 Error: Failed to connect to api.openrouter.ai
+Jan 15 16:12:45 Retrying in 5 seconds...
+```
+
+**Telegram Error:**
+```
+Jan 15 17:23:11 Error: Telegram webhook failed
+Jan 15 17:23:11 Bot token may be invalid
+```
+
+## Log Filtering
+
+View specific log types directly via SSH:
+
+### Errors Only
+
+```bash
+ssh root@YOUR_SERVER_IP "journalctl -u openclaw | grep -i error"
+```
+
+### Warnings and Errors
+
+```bash
+ssh root@YOUR_SERVER_IP "journalctl -u openclaw | grep -iE 'warn|error'"
+```
+
+### Last Hour
+
+```bash
+ssh root@YOUR_SERVER_IP "journalctl -u openclaw --since '1 hour ago'"
+```
+
+### Date Range
+
+```bash
+ssh root@YOUR_SERVER_IP "journalctl -u openclaw --since '2026-01-15 14:00' --until '2026-01-15 16:00'"
+```
+
+## Troubleshooting with Logs
+
+### Bot Not Responding
+
+<Steps>
+  <Step title="Check if service is running">
+    Look for startup messages:
+    
+    ```
+    Jan 15 14:45:27 OpenClaw ready
+    ```
+    
+    If missing, check for errors or restart messages.
+  </Step>
+
+  <Step title="Verify Telegram connection">
+    Look for:
+    
+    ```
+    Jan 15 14:45:26 Connected to Telegram as @my_bot
+    ```
+    
+    If missing, check bot token:
+    ```
+    Error: Telegram authentication failed
+    ```
+  </Step>
+
+  <Step title="Check for access control errors">
+    If users are blocked:
+    
+    ```
+    Jan 15 15:30:12 Rejected message from unauthorized user: 987654321
+    ```
+    
+    Update `telegramAllowFrom` in configuration.
+  </Step>
+</Steps>
+
+### AI Responses Failing
+
+<Steps>
+  <Step title="Check AI provider connection">
+    ```
+    Jan 15 15:30:14 OpenRouter request: moonshotai/kimi-k2.5
+    Jan 15 15:30:16 Response received (142 tokens)
+    ```
+    
+    If you see errors:
+    ```
+    Error: AI provider authentication failed
+    ```
+  </Step>
+
+  <Step title="Verify API key">
+    From SSH:
+    ```bash
+    cat ~/.openclaw/.env
+    ```
+    
+    Check the AI provider API key is correct.
+  </Step>
+
+  <Step title="Check rate limits">
+    ```
+    Warning: Rate limit approaching
+    Error: Rate limit exceeded, retry after 60s
+    ```
+    
+    Wait or upgrade your AI provider plan.
+  </Step>
+</Steps>
+
+### High Memory Usage
+
+<Steps>
+  <Step title="Check for memory warnings">
+    ```
+    Warning: Memory usage at 85%
+    Error: JavaScript heap out of memory
+    ```
+  </Step>
+
+  <Step title="Verify server size">
+    From `/status`, check your deployment:
+    - Minimum: 2GB RAM
+    - Recommended: 4GB RAM for production
+  </Step>
+
+  <Step title="Restart service">
+    Via SSH:
+    ```bash
+    systemctl restart openclaw
+    ```
+  </Step>
+</Steps>
+
+## Advanced Log Analysis
+
+### Export Logs to File
+
+Via SSH:
+
+```bash
+journalctl -u openclaw > openclaw-logs.txt
+```
+
+Download to local machine:
+
+```bash
+scp root@YOUR_SERVER_IP:openclaw-logs.txt .
+```
+
+### Search Logs
+
+Search for specific terms:
+
+```bash
+journalctl -u openclaw | grep "search term"
+```
+
+Example - find all errors:
+```bash
+journalctl -u openclaw | grep -i error
+```
+
+### Count Log Entries
+
+Count errors in last hour:
+
+```bash
+journalctl -u openclaw --since "1 hour ago" | grep -i error | wc -l
+```
+
+### Monitor in Real-Time
+
+Follow logs as they happen:
+
+```bash
+journalctl -u openclaw -f
+```
+
+Press `Ctrl+C` to stop.
+
+## Log Rotation
+
+OpenClaw uses systemd's journald, which automatically rotates logs:
+
+- **Default retention**: 1 month
+- **Max size**: 4GB
+- **Location**: `/var/log/journal/`
+
+### View Log Disk Usage
+
+```bash
+journalctl --disk-usage
+```
+
+Output:
+```
+Archived and active journals take up 245.6M in the file system.
+```
+
+### Clean Old Logs
+
+Remove logs older than 7 days:
+
+```bash
+journalctl --vacuum-time=7d
+```
+
+Limit total size to 500MB:
+
+```bash
+journalctl --vacuum-size=500M
+```
+
+## Performance Monitoring
+
+### Track Response Times
+
+Search for response time logs:
+
+```bash
+journalctl -u openclaw | grep "Response received"
+```
+
+Example output:
+```
+Jan 15 15:30:16 Response received (142 tokens, 2.3s)
+Jan 15 15:35:22 Response received (389 tokens, 4.1s)
+Jan 15 15:42:18 Response received (95 tokens, 1.2s)
+```
+
+### Monitor Message Volume
+
+Count messages per hour:
+
+```bash
+journalctl -u openclaw --since "1 hour ago" | grep "New message" | wc -l
+```
+
+### Track Errors Over Time
+
+Errors in last 24 hours by hour:
+
+```bash
+for i in {0..23}; do
+  echo -n "Hour -$i: "
+  journalctl -u openclaw --since "$i hours ago" --until "$((i-1)) hours ago" \
+    | grep -i error | wc -l
+done
+```
+
+## Alerting and Monitoring
+
+<Tip>
+  For production deployments, consider setting up external monitoring:
+  
+  - **Uptime monitoring**: UptimeRobot, Pingdom
+  - **Log aggregation**: Papertrail, Loggly
+  - **Application monitoring**: New Relic, Datadog
+  - **Error tracking**: Sentry, Rollbar
+</Tip>
+
+### Simple Health Check Script
+
+Create a monitoring script on your server:
+
+```bash
+#!/bin/bash
+# health-check.sh
+
+# Check if OpenClaw is running
+if ! systemctl is-active --quiet openclaw; then
+  echo "ALERT: OpenClaw is not running"
+  # Send notification (email, Slack, etc.)
+  exit 1
+fi
+
+# Check for recent errors
+ERRORS=$(journalctl -u openclaw --since "5 minutes ago" | grep -i error | wc -l)
+if [ "$ERRORS" -gt 5 ]; then
+  echo "ALERT: $ERRORS errors in last 5 minutes"
+  exit 1
+fi
+
+echo "OK: OpenClaw is healthy"
+exit 0
+```
+
+Run via cron every 5 minutes:
+
+```bash
+crontab -e
+```
+
+Add:
+```
+*/5 * * * * /root/health-check.sh
+```
+
+## Best Practices
+
+<Tip>
+  **Regular log review**:
+  - Check logs daily for new deployments
+  - Weekly review for production systems
+  - Investigate any unexpected errors immediately
+</Tip>
+
+**What to watch for:**
+
+1. **Startup errors**: Service fails to start
+2. **Authentication failures**: API keys invalid or expired
+3. **Rate limiting**: Approaching or exceeding limits
+4. **Network issues**: Connection timeouts
+5. **Memory warnings**: Approaching system limits
+
+**When to take action:**
+
+- **Immediate**: Service down, authentication failures
+- **Within 1 hour**: Rate limiting, network errors
+- **Within 24 hours**: Memory warnings, performance degradation
+
+## Next Steps
+
+- [SSH Access](/guides/ssh-access) - Advanced log analysis via SSH
+- [Managing Deployments](/guides/managing-deployments) - Check deployment health
+- [Destroying Deployments](/guides/destroying-deployments) - Clean up problematic deployments

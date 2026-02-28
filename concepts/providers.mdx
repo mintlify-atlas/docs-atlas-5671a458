@@ -1,0 +1,321 @@
+---
+title: Providers
+description: Cloud infrastructure providers supported by ClawControl
+---
+
+Providers are the cloud infrastructure platforms where ClawControl deploys your OpenClaw instances. Each provider offers different server options, regions, and pricing.
+
+## Supported Providers
+
+From the type definition at `src/types/index.ts:4`:
+
+```typescript
+type Provider = "hetzner" | "digitalocean" | "vultr";
+```
+
+ClawControl currently supports:
+
+### Hetzner Cloud
+
+**Status:** Fully Supported
+
+<Card title="Hetzner Cloud" icon="cloud" href="https://www.hetzner.com/cloud">
+  German cloud provider known for competitive pricing and reliable infrastructure
+</Card>
+
+**Key Features:**
+- Cost-effective pricing
+- European and US data centers
+- Excellent network performance
+- Transparent pricing structure
+
+**Popular Locations:**
+- `ash` - Ashburn, VA (US East)
+- `nbg1` - Nuremberg, Germany
+- `fsn1` - Falkenstein, Germany
+- `hel1` - Helsinki, Finland
+
+**Common Server Types:**
+- `cpx11` - 2 vCPU, 2GB RAM (starting tier)
+- `cpx21` - 3 vCPU, 4GB RAM
+- `cpx31` - 4 vCPU, 8GB RAM
+
+### DigitalOcean
+
+**Status:** Fully Supported
+
+<Card title="DigitalOcean" icon="water" href="https://www.digitalocean.com">
+  Developer-focused cloud platform with global presence and simple pricing
+</Card>
+
+**Key Features:**
+- Developer-friendly interface
+- Global data center coverage
+- Predictable pricing
+- Extensive documentation
+
+**Popular Regions:**
+- `nyc1`, `nyc3` - New York City
+- `sfo3` - San Francisco
+- `lon1` - London
+- `sgp1` - Singapore
+
+**Common Droplet Sizes:**
+- `s-1vcpu-2gb` - 1 vCPU, 2GB RAM (starting tier)
+- `s-2vcpu-4gb` - 2 vCPU, 4GB RAM
+- `s-4vcpu-8gb` - 4 vCPU, 8GB RAM
+
+### Vultr
+
+**Status:** Planned
+
+<Note>
+Vultr support is planned but not yet implemented. The provider type is defined in the schema for future compatibility.
+</Note>
+
+## Provider Configuration
+
+Each provider has its own configuration structure:
+
+### Hetzner Configuration
+
+From `src/types/index.ts:74-80`:
+
+```typescript
+interface HetznerConfig {
+  apiKey: string;              // Hetzner API token
+  serverType: string;          // e.g., "cpx11"
+  location: string;            // e.g., "ash"
+  image: string;               // e.g., "ubuntu-24.04"
+}
+```
+
+**Example:**
+```json
+{
+  "apiKey": "your-hetzner-api-key",
+  "serverType": "cpx11",
+  "location": "ash",
+  "image": "ubuntu-24.04"
+}
+```
+
+<Accordion title="Getting a Hetzner API key">
+1. Create a Hetzner Cloud account at [console.hetzner.cloud](https://console.hetzner.cloud)
+2. Create a new project
+3. Navigate to Security > API Tokens
+4. Click "Generate API Token"
+5. Give it Read & Write permissions
+6. Copy the token immediately (it won't be shown again)
+</Accordion>
+
+### DigitalOcean Configuration
+
+From `src/types/index.ts:84-90`:
+
+```typescript
+interface DigitalOceanConfig {
+  apiKey: string;              // DigitalOcean API token
+  size: string;                // e.g., "s-1vcpu-2gb"
+  region: string;              // e.g., "nyc1"
+  image: string;               // e.g., "ubuntu-24-04-x64"
+}
+```
+
+**Example:**
+```json
+{
+  "apiKey": "your-digitalocean-api-token",
+  "size": "s-1vcpu-2gb",
+  "region": "nyc1",
+  "image": "ubuntu-24-04-x64"
+}
+```
+
+<Accordion title="Getting a DigitalOcean API token">
+1. Create a DigitalOcean account at [cloud.digitalocean.com](https://cloud.digitalocean.com)
+2. Navigate to API in the left sidebar
+3. Click "Generate New Token"
+4. Give it a name and select both Read and Write scopes
+5. Copy the token immediately (it won't be shown again)
+</Accordion>
+
+## Provider API Clients
+
+ClawControl includes full API clients for each provider:
+
+### Hetzner API Client
+
+From `src/providers/hetzner/api.ts:32-341`:
+
+```typescript
+class HetznerClient {
+  // SSH Key Management
+  async listSSHKeys(): Promise<HetznerSSHKey[]>
+  async createSSHKey(name: string, publicKey: string): Promise<HetznerSSHKey>
+  async deleteSSHKey(id: number): Promise<void>
+  
+  // Server Management
+  async listServers(): Promise<HetznerServer[]>
+  async createServer(params): Promise<{server, action}>
+  async deleteServer(id: number): Promise<void>
+  async waitForServerRunning(id: number): Promise<HetznerServer>
+  
+  // Resource Discovery
+  async listServerTypes(): Promise<HetznerServerType[]>
+  async listLocations(): Promise<HetznerLocation[]>
+}
+```
+
+### DigitalOcean API Client
+
+From `src/providers/digitalocean/api.ts:22-241`:
+
+```typescript
+class DigitalOceanClient {
+  // SSH Key Management
+  async listSSHKeys(): Promise<DOSSHKey[]>
+  async createSSHKey(name: string, publicKey: string): Promise<DOSSHKey>
+  async deleteSSHKey(idOrFingerprint): Promise<void>
+  
+  // Droplet Management
+  async listDroplets(): Promise<DODroplet[]>
+  async createDroplet(params): Promise<{droplet, links}>
+  async deleteDroplet(id: number): Promise<void>
+  async waitForDropletActive(id: number): Promise<DODroplet>
+  
+  // Resource Discovery
+  async listSizes(): Promise<DOSize[]>
+  async listRegions(): Promise<DORegion[]>
+}
+```
+
+## Choosing a Provider
+
+Consider these factors when selecting a provider:
+
+<CardGroup cols={2}>
+  <Card title="Cost" icon="dollar-sign">
+    Hetzner typically offers lower prices, especially for European servers.
+  </Card>
+  
+  <Card title="Location" icon="globe">
+    Choose a provider with data centers near your users for lower latency.
+  </Card>
+  
+  <Card title="Existing Account" icon="user">
+    Use a provider where you already have an account and billing set up.
+  </Card>
+  
+  <Card title="Compliance" icon="shield">
+    Consider data residency requirements (EU vs US vs other regions).
+  </Card>
+</CardGroup>
+
+## Provider Comparison
+
+| Feature | Hetzner | DigitalOcean | Vultr |
+|---------|---------|--------------|-------|
+| **Status** | ✅ Supported | ✅ Supported | 🚧 Planned |
+| **Starting RAM** | 2GB | 2GB | - |
+| **Starting Price** | ~$5/month | ~$12/month | - |
+| **US Locations** | 1 (Ashburn) | 6+ regions | - |
+| **EU Locations** | 3+ regions | 2+ regions | - |
+| **API Maturity** | Excellent | Excellent | - |
+
+## Minimum Requirements
+
+For running OpenClaw, we recommend:
+
+<Info>
+**Minimum specs:** 1 vCPU, 2GB RAM, 20GB storage
+
+This is sufficient for most AI agent workloads. Chrome browser and Node.js require adequate memory.
+</Info>
+
+Both Hetzner's `cpx11` and DigitalOcean's `s-1vcpu-2gb` meet these requirements.
+
+## Provider-Specific Implementation
+
+Each provider has dedicated implementation files:
+
+```
+src/providers/
+├── hetzner/
+│   ├── api.ts         // Hetzner Cloud API client
+│   └── index.ts       // Provider exports
+├── digitalocean/
+│   ├── api.ts         // DigitalOcean API client
+│   └── index.ts       // Provider exports
+└── index.ts           // Provider registry
+```
+
+The deployment orchestrator (see [Deployments](/concepts/deployments)) automatically selects the correct provider client based on your configuration.
+
+From `src/services/deployment.ts:358-368`:
+
+```typescript
+private async createServer(): Promise<void> {
+  const config = this.deployment.config;
+
+  if (config.provider === "hetzner") {
+    await this.createHetznerServer();
+  } else if (config.provider === "digitalocean") {
+    await this.createDigitalOceanServer();
+  } else {
+    throw new Error(`Unsupported provider: ${config.provider}`);
+  }
+}
+```
+
+## API Key Security
+
+<Warning>
+API keys grant full access to create and delete resources in your cloud account. Keep them secure:
+
+- Never commit API keys to version control
+- Use ClawControl's built-in secret management
+- Rotate keys periodically
+- Use read-only keys for testing when possible
+</Warning>
+
+ClawControl stores API keys in deployment configurations at `~/.clawcontrol/deployments/<name>/config.json`. This directory should have restricted permissions (700).
+
+## Error Handling
+
+Both provider clients include comprehensive error handling:
+
+```typescript
+// Hetzner errors
+class HetznerAPIError extends Error {
+  code: string;  // e.g., "unauthorized", "not_found"
+}
+
+// DigitalOcean errors
+class DigitalOceanAPIError extends Error {
+  code: string;
+  statusCode: number;
+}
+```
+
+ClawControl automatically retries transient errors during deployment (see [Checkpoints](/concepts/checkpoints)).
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Create Deployment" icon="plus" href="/cli/new">
+    Create your first deployment with a provider
+  </Card>
+  
+  <Card title="Templates" icon="file-code" href="/concepts/templates">
+    Use templates with pre-configured provider settings
+  </Card>
+  
+  <Card title="Deployments" icon="rocket" href="/concepts/deployments">
+    Learn about the deployment lifecycle
+  </Card>
+  
+  <Card title="Hetzner Docs" icon="book" href="https://docs.hetzner.com/cloud">
+    Official Hetzner Cloud documentation
+  </Card>
+</CardGroup>

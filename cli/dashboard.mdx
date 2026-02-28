@@ -1,0 +1,353 @@
+---
+title: /dashboard
+description: Open the OpenClaw web dashboard in your browser
+---
+
+The `/dashboard` command establishes an SSH tunnel to your OpenClaw instance and opens the web-based dashboard in your browser. This provides a GUI for monitoring and interacting with your OpenClaw agent.
+
+## Usage
+
+```
+/dashboard
+```
+
+## Dashboard Access Process
+
+### 1. Select Deployment
+
+Choose which deployment's dashboard to open:
+
+```
+/dashboard - Select a deployment to open its dashboard
+
+┌────────────────────────────────────────────────────┐
+│ > production-claude  203.0.113.45                  │
+│   staging-test      198.51.100.23  [tunnel active] │
+└────────────────────────────────────────────────────┘
+
+Arrow keys to select | Enter to connect | Esc to go back
+```
+
+<Note>
+  Deployments with active tunnels are marked with `[tunnel active]`.
+</Note>
+
+### 2. Connecting
+
+ClawControl establishes an SSH tunnel:
+
+```
+/dashboard - Connecting...
+
+┌────────────────────────────────────────────┐
+│ Establishing SSH tunnel...                 │
+│ This may take a few seconds...             │
+└────────────────────────────────────────────┘
+```
+
+### 3. Dashboard Ready
+
+Once connected, the dashboard URL is displayed:
+
+```
+/dashboard - production-claude
+
+┌═══════════════════════════════════════════════════┐
+║ Dashboard Ready                                    ║
+║ Tunnel: 127.0.0.1:18790 → 203.0.113.45:18789     ║
+└───────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────┐
+│ Dashboard URL:                             │
+│ http://127.0.0.1:18790/?token=abc123...    │
+└────────────────────────────────────────────┘
+
+O    Open in browser
+C    Copy URL to clipboard
+D    Disconnect tunnel
+Esc  Back to selection (tunnel stays active)
+```
+
+## Dashboard Actions
+
+### Open in Browser (O)
+
+Press `O` to automatically open the dashboard in your default browser:
+
+```bash
+# Browser opens to:
+http://127.0.0.1:18790/?token=abc123def456...
+```
+
+### Copy URL (C)
+
+Press `C` to copy the full URL to your clipboard:
+
+```
+✓ URL copied to clipboard!
+
+http://127.0.0.1:18790/?token=abc123def456...
+```
+
+You can now paste this URL anywhere.
+
+### Disconnect Tunnel (D)
+
+Press `D` to close the SSH tunnel:
+
+```
+/dashboard - Select a deployment to open its dashboard
+
+┌────────────────────────────────────────────┐
+│ > production-claude  203.0.113.45          │
+└────────────────────────────────────────────┘
+
+# Tunnel removed, no longer marked [tunnel active]
+```
+
+### Keep Tunnel Active (Esc)
+
+Press `Esc` to return to the selection view while keeping the tunnel active. The tunnel continues running in the background.
+
+## SSH Tunnel Details
+
+### How It Works
+
+1. ClawControl creates an SSH connection to your server
+2. Forwards a local port (e.g., 18790) to the remote OpenClaw gateway (18789)
+3. Retrieves the gateway authentication token
+4. Constructs the full dashboard URL with token
+5. Opens in your browser or copies to clipboard
+
+### Port Assignment
+
+Local ports are automatically assigned starting from 18790:
+
+- First tunnel: `127.0.0.1:18790`
+- Second tunnel: `127.0.0.1:18791`
+- Third tunnel: `127.0.0.1:18792`
+- And so on...
+
+### Multiple Tunnels
+
+You can have multiple dashboard tunnels open simultaneously:
+
+```
+1 active tunnel
+
+production-claude: 127.0.0.1:18790 → 203.0.113.45:18789
+staging-test: 127.0.0.1:18791 → 198.51.100.23:18789
+```
+
+## Dashboard Features
+
+The OpenClaw dashboard provides:
+
+- **Real-time Chat**: Interact with your AI agent
+- **Conversation History**: View past conversations
+- **Tool Execution Logs**: See what tools were invoked
+- **Configuration**: Modify agent settings
+- **System Status**: Monitor resource usage
+- **File Browser**: Browse and download files
+
+## Example Terminal Session
+
+```
+> /dashboard
+
+/dashboard - Select a deployment
+
+┌────────────────────────────────────────────┐
+│ > production-claude  203.0.113.45          │
+└────────────────────────────────────────────┘
+
+[Enter]
+
+/dashboard - Connecting...
+
+Establishing SSH tunnel...
+Retrieving dashboard URL...
+
+✓ Dashboard Ready
+
+Tunnel: 127.0.0.1:18790 → 203.0.113.45:18789
+
+Dashboard URL:
+http://127.0.0.1:18790/?token=abc123def456...
+
+[Press O]
+
+# Browser opens automatically
+# Dashboard loads in browser
+
+[In ClawControl, press Esc]
+
+/dashboard - Select a deployment
+
+┌────────────────────────────────────────────────────┐
+│ > production-claude  203.0.113.45  [tunnel active] │
+└────────────────────────────────────────────────────┘
+
+# Tunnel still running, can reconnect later
+
+[Press Enter again]
+
+# Instantly loads dashboard view (tunnel already active)
+
+✓ Dashboard Ready
+```
+
+## Browser Access
+
+When you open the dashboard URL:
+
+```
+OpenClaw Dashboard
+
+[Chat Interface]
+┌────────────────────────────────────────────┐
+│ You: What's the server uptime?            │
+│                                            │
+│ Assistant: Let me check that for you.     │
+│ [Running command: uptime]                  │
+│ The server has been up for 5 days, 3 hours│
+└────────────────────────────────────────────┘
+
+[Type message...] [Send]
+```
+
+## Security
+
+The dashboard is secured with:
+
+- **Token Authentication**: URL includes a secure token
+- **SSH Tunnel Encryption**: All traffic encrypted via SSH
+- **Local Access Only**: Dashboard only accessible via 127.0.0.1
+- **Session Tokens**: Tokens expire after period of inactivity
+
+<Warning>
+  Do not share dashboard URLs. They contain authentication tokens that grant full access to your OpenClaw instance.
+</Warning>
+
+## Troubleshooting
+
+### Connection Failed
+
+```
+/dashboard - Connection failed
+
+┌────────────────────────────────────────────┐
+│ Failed to establish SSH tunnel             │
+│ Error: Connection timeout                  │
+└────────────────────────────────────────────┘
+
+Press Enter or Esc to go back
+```
+
+**Solutions:**
+1. Check server status: `/status`
+2. Verify SSH works: `/ssh`
+3. Check firewall rules allow SSH (port 22)
+
+### Browser Won't Open
+
+**Manual Access:**
+1. Press `C` to copy URL
+2. Manually paste into any browser
+3. Ensure you include the full token
+
+### Tunnel Already Active
+
+If you select a deployment with an active tunnel, ClawControl instantly displays the dashboard view without reconnecting.
+
+### Port Conflict
+
+```
+Error: Port 18790 already in use
+```
+
+**Solution:**
+ClawControl automatically finds the next available port. If you see this error, close other tunnels with `D` first.
+
+## Empty State
+
+If no deployed instances exist:
+
+```
+/dashboard - Open OpenClaw dashboard
+
+┌────────────────────────────────────────────┐
+│ No deployed instances found!               │
+│ Deploy an instance first with /deploy      │
+└────────────────────────────────────────────┘
+
+Press any key to return to home
+```
+
+## Keyboard Controls
+
+**Selection View:**
+- **↑/↓** - Navigate between deployments
+- **Enter** - Connect to selected deployment
+- **Esc** - Return to home
+
+**Dashboard View:**
+- **O** - Open in browser
+- **C** - Copy URL to clipboard
+- **D** - Disconnect tunnel
+- **Esc** - Back to selection (keep tunnel active)
+
+## Alternative Access
+
+### Via Tailscale
+
+If Tailscale is configured:
+
+```bash
+http://100.64.0.12:18789/
+```
+
+No tunnel needed - direct access over Tailscale VPN.
+
+### Via SSH Port Forward
+
+Manual SSH tunnel:
+
+```bash
+ssh -i ~/.clawcontrol/deployments/production/ssh_key.pem \
+    -L 8080:localhost:18789 \
+    root@203.0.113.45
+
+# Then access: http://localhost:8080/
+```
+
+## Tips
+
+<Tip>
+  Keep the tunnel active when switching between ClawControl commands. The tunnel runs in the background and reconnecting is instant.
+</Tip>
+
+<Tip>
+  Use the dashboard for interactive work with your AI agent. Use `/logs` and `/status` for monitoring and troubleshooting.
+</Tip>
+
+<Note>
+  The dashboard provides a full-featured GUI alternative to Telegram. You can use both simultaneously - they connect to the same OpenClaw instance.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Logs Command" icon="file-lines" href="/cli/logs">
+    View application logs
+  </Card>
+  <Card title="SSH Command" icon="terminal" href="/cli/ssh">
+    Direct server access
+  </Card>
+  <Card title="Status Command" icon="chart-line" href="/cli/status">
+    Monitor health
+  </Card>
+  <Card title="Channels Command" icon="comments" href="/cli/channels">
+    Configure Telegram
+  </Card>
+</CardGroup>

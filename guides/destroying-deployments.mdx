@@ -1,0 +1,475 @@
+---
+title: 'Destroying Deployments'
+description: 'Safely remove OpenClaw deployments and clean up cloud resources'
+---
+
+When you're done with a deployment, use the `/destroy` command to properly clean up cloud resources and local configuration.
+
+<Warning>
+  Destroying a deployment is permanent and irreversible. All data on the server will be lost.
+</Warning>
+
+## What Gets Destroyed
+
+The destroy process removes:
+
+**Cloud Resources:**
+- VPS server instance
+- Associated SSH keys from cloud provider
+- Public IP address
+- All data on the server
+
+**Local Files:**
+- Deployment configuration (`~/.clawcontrol/deployments/NAME/config.json`)
+- Deployment state (`~/.clawcontrol/deployments/NAME/state.json`)
+- SSH key pair (`~/.clawcontrol/deployments/NAME/ssh/`)
+- Entire deployment directory
+
+**What Doesn't Get Destroyed:**
+- Your cloud provider account
+- API keys stored in ClawControl
+- Other deployments
+- Templates
+
+## Destroying a Deployment
+
+<Steps>
+  <Step title="Launch destroy command">
+    From ClawControl's main menu:
+    
+    ```bash
+    /destroy
+    ```
+    
+    ClawControl lists all deployments:
+    
+    ```
+    /destroy - Select a deployment to destroy
+    
+    WARNING: This action cannot be undone!
+    
+    > my-openclaw-server     [deployed]
+      old-test-server        [failed]
+      dev-server             [initialized]
+    
+    Arrow keys to select | Enter to destroy | Esc to go back
+    ```
+  </Step>
+
+  <Step title="Select deployment">
+    Use arrow keys to select the deployment you want to destroy and press Enter.
+    
+    <Tip>
+      You can destroy deployments in any state: initialized, deployed, configuring, or failed.
+    </Tip>
+  </Step>
+
+  <Step title="Confirm destruction">
+    ClawControl shows what will be deleted and asks for confirmation:
+    
+    ```
+    Confirm Destruction
+    
+    You are about to destroy:
+    Deployment: my-openclaw-server
+    Server IP: 159.89.123.45
+    
+    This will permanently delete:
+    • The VPS server (if deployed)
+    • All data on the server
+    • Local configuration files
+    • SSH keys
+    
+    Type the deployment name to confirm:
+    
+    Confirm: _
+    ```
+    
+    Type the exact deployment name to confirm:
+    
+    ```
+    Confirm: my-openclaw-server
+    ```
+    
+    Press Enter to proceed.
+  </Step>
+
+  <Step title="Destruction in progress">
+    ClawControl connects to your cloud provider and removes resources:
+    
+    ```
+    Destroying deployment...
+    Deleting server and cleaning up resources...
+    ```
+    
+    This typically takes 10-30 seconds.
+  </Step>
+
+  <Step title="Destruction complete">
+    When finished:
+    
+    ```
+    Deployment Destroyed
+    
+    The deployment "my-openclaw-server" has been permanently deleted.
+    
+    Press any key to return to home
+    ```
+    
+    The deployment no longer appears in `/list` or `/status`.
+  </Step>
+</Steps>
+
+## What Happens During Destruction
+
+<Steps>
+  <Step title="Delete cloud server">
+    ClawControl calls your cloud provider's API to delete the VPS:
+    
+    **Hetzner:**
+    ```
+    DELETE /servers/{server_id}
+    ```
+    
+    **DigitalOcean:**
+    ```
+    DELETE /droplets/{droplet_id}
+    ```
+    
+    The server is immediately shut down and scheduled for deletion.
+  </Step>
+
+  <Step title="Remove SSH key">
+    The SSH key uploaded during deployment is removed from your cloud provider:
+    
+    **Hetzner:**
+    ```
+    DELETE /ssh_keys/{key_id}
+    ```
+    
+    **DigitalOcean:**
+    ```
+    DELETE /account/keys/{key_id}
+    ```
+  </Step>
+
+  <Step title="Clean local files">
+    All local files are deleted:
+    
+    ```bash
+    rm -rf ~/.clawcontrol/deployments/my-openclaw-server/
+    ```
+    
+    This includes:
+    - Configuration and state files
+    - SSH key pair
+    - Deployment directory
+  </Step>
+</Steps>
+
+## Special Cases
+
+### Destroying Initialized Deployments
+
+For deployments that were never deployed (status: `initialized`):
+
+1. No cloud resources to delete
+2. Only local files are removed
+3. Use `/list` → [D]elete instead (faster)
+
+```
+/list → Select deployment → Press D
+```
+
+### Destroying Failed Deployments
+
+For deployments that failed during provisioning:
+
+1. ClawControl attempts to delete any created resources
+2. Even if the server doesn't exist, cleanup succeeds
+3. Local files are always removed
+
+<Tip>
+  If a deployment failed early, the server may not exist. ClawControl handles this gracefully and completes the cleanup.
+</Tip>
+
+### Destroying Multiple Deployments
+
+To destroy multiple deployments:
+
+1. Run `/destroy` for each one individually
+2. Confirm each destruction
+
+There's no bulk destroy option for safety.
+
+## Troubleshooting Destruction
+
+### API Key Expired or Invalid
+
+**Problem:** Can't delete server because API key is invalid
+
+**Solution:**
+
+1. Manually delete the server from your cloud provider's dashboard:
+   - **Hetzner**: Cloud Console → Servers → Delete
+   - **DigitalOcean**: Droplets → Your Server → Destroy
+
+2. Run `/destroy` again - it will skip cloud deletion and clean up local files
+
+### Server Already Deleted
+
+**Problem:** Server was manually deleted from cloud provider
+
+**Solution:**
+
+Run `/destroy` normally. ClawControl detects the server is gone and completes local cleanup.
+
+### Local Files Deleted Manually
+
+**Problem:** Deployment directory was deleted manually
+
+**Solution:**
+
+1. Server still exists in cloud (costing money)
+2. Manually delete from cloud provider's dashboard
+3. Delete SSH key from cloud provider (search for "clawcontrol-*")
+
+<Warning>
+  Always use `/destroy` instead of manually deleting files. Manual deletion leaves cloud resources running and costing money.
+</Warning>
+
+### Destruction Hangs
+
+**Problem:** Destruction process is stuck
+
+**Solutions:**
+
+1. Wait 2-3 minutes (cloud providers can be slow)
+2. Press Ctrl+C to cancel
+3. Check cloud provider dashboard to see if server was deleted
+4. Try `/destroy` again
+
+## Cost Implications
+
+### Hourly Billing
+
+Most cloud providers bill by the hour:
+
+**Hetzner:**
+- Hourly billing, rounded up
+- CPX11: ~$0.007/hour
+- Destroy before hour ends to save money
+
+**DigitalOcean:**
+- Hourly billing with monthly cap
+- s-1vcpu-2gb: $0.018/hour ($12/month cap)
+- Destroy anytime to stop charges
+
+### When to Destroy
+
+**Destroy immediately if:**
+- Testing is complete
+- Deployment failed and you're starting over
+- Switching to different configuration
+- No longer needed
+
+**Keep running if:**
+- Production bot in active use
+- Long-running experiments
+- Shared with team
+- Cost is acceptable
+
+<Tip>
+  For development and testing, destroy deployments when not in use to save costs. Recreate when needed (takes ~5-10 minutes).
+</Tip>
+
+## Before You Destroy
+
+### Backup Data
+
+If you need to preserve any data:
+
+<Steps>
+  <Step title="Connect via SSH">
+    ```bash
+    /ssh
+    ```
+    Select your deployment.
+  </Step>
+
+  <Step title="Identify important files">
+    ```bash
+    # OpenClaw configuration
+    ~/.openclaw/config.json
+    ~/.openclaw/.env
+    
+    # Logs
+    journalctl -u openclaw > openclaw-logs.txt
+    
+    # Custom data
+    /path/to/your/data
+    ```
+  </Step>
+
+  <Step title="Download files">
+    From your local machine:
+    
+    ```bash
+    scp -i ~/.clawcontrol/deployments/NAME/ssh/id_ed25519 \
+      root@SERVER_IP:~/.openclaw/config.json \
+      ./backup-config.json
+    ```
+  </Step>
+</Steps>
+
+### Export Configuration
+
+To recreate the deployment later:
+
+1. Configuration is in `~/.clawcontrol/deployments/NAME/config.json`
+2. Copy before destroying:
+   ```bash
+   cp ~/.clawcontrol/deployments/my-openclaw-server/config.json ~/backups/
+   ```
+3. Or fork the deployment to preserve settings:
+   ```bash
+   /list → Select deployment → Press F
+   ```
+
+### Notify Users
+
+If others use this bot:
+
+1. Notify in Telegram/Slack that bot is shutting down
+2. Provide timeline for new instance (if applicable)
+3. Share new bot credentials when redeployed
+
+## After Destruction
+
+### Verify Cloud Resources Deleted
+
+Check your cloud provider dashboard:
+
+**Hetzner:**
+1. Go to [Cloud Console](https://console.hetzner.cloud/)
+2. Navigate to Servers
+3. Verify server is gone
+4. Check SSH Keys section
+
+**DigitalOcean:**
+1. Go to [Droplets](https://cloud.digitalocean.com/droplets)
+2. Verify droplet is gone
+3. Check Settings → Security → SSH Keys
+
+### Check Billing
+
+Monitor your cloud provider billing:
+
+- **Hetzner**: Check Cloud Console → Billing
+- **DigitalOcean**: Check Billing → Current Usage
+
+Verify charges stopped after destruction.
+
+### Clean Up Tailscale (Optional)
+
+If you used Tailscale:
+
+1. Go to [Tailscale Admin](https://login.tailscale.com/admin/machines)
+2. Find the destroyed server
+3. Click the "..." menu → Delete
+
+## Alternative: Delete vs Destroy
+
+ClawControl has two deletion commands:
+
+### /destroy
+
+```yaml
+When to use: Deployed servers
+Deletes:
+  - Cloud VPS server
+  - Cloud SSH keys
+  - Local configuration
+  - Local SSH keys
+Safety: Type deployment name to confirm
+Time: 10-30 seconds
+```
+
+### /list → [D]elete
+
+```yaml
+When to use: Initialized deployments only
+Deletes:
+  - Local configuration
+  - Local SSH keys
+Safety: Type deployment name to confirm
+Time: Instant
+```
+
+<Tip>
+  Use `/destroy` for any deployment that was deployed (even if failed). Use `/list` → [D]elete only for deployments that were never deployed.
+</Tip>
+
+## Best Practices
+
+### Development Workflow
+
+```
+1. Create deployment: /new
+2. Deploy: /deploy
+3. Test functionality
+4. Destroy when done: /destroy
+5. Repeat with different configuration
+```
+
+**Cost for 2 hours of testing:**
+- Hetzner CPX11: ~$0.02
+- DigitalOcean basic: ~$0.04
+
+### Production Workflow
+
+```
+1. Create deployment: /new
+2. Deploy: /deploy
+3. Test thoroughly
+4. Monitor with /status and /logs
+5. Keep running
+6. Destroy only when replacing or retiring
+```
+
+### Multi-Instance Strategy
+
+```
+dev-server:     Create/destroy frequently
+staging-server: Keep running during development
+prod-server:    Keep running continuously
+```
+
+Only destroy production when:
+- Migrating to new infrastructure
+- No longer needed
+- Major configuration change required
+
+## Recovery
+
+<Warning>
+  Once a deployment is destroyed, it CANNOT be recovered. The server and all its data are permanently deleted.
+</Warning>
+
+**If you destroyed by mistake:**
+
+1. **Server data**: Lost permanently
+2. **Configuration**: Gone if not backed up
+3. **Recreation**: Deploy fresh instance with similar config
+
+**To minimize risk:**
+- Always confirm the deployment name carefully
+- Keep templates of common configurations
+- Document API keys externally
+- Back up important data regularly
+
+## Next Steps
+
+- [First Deployment](/guides/first-deployment) - Create a new deployment
+- [Using Templates](/guides/using-templates) - Quickly recreate destroyed deployments
+- [Managing Deployments](/guides/managing-deployments) - Fork before destroying to preserve config

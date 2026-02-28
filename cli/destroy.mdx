@@ -1,0 +1,414 @@
+---
+title: /destroy
+description: Permanently delete a deployment
+---
+
+The `/destroy` command permanently deletes a deployment, including the cloud server, SSH keys, and local configuration files. This action cannot be undone.
+
+<Warning>
+  This is a destructive operation. All data on the server will be lost permanently. Make sure you have backups of any important data before destroying a deployment.
+</Warning>
+
+## Usage
+
+```
+/destroy
+```
+
+## Destruction Process
+
+### 1. Select Deployment
+
+Choose which deployment to destroy:
+
+```
+/destroy - Select a deployment to destroy
+
+┌═══════════════════════════════════════════════════┐
+║ WARNING: This action cannot be undone!             ║
+├───────────────────────────────────────────────────┤
+│ > production-claude    [deployed]                 │
+│   staging-test        [deployed]                  │
+│   dev-instance        [not_deployed]              │
+└───────────────────────────────────────────────────┘
+
+Arrow keys to select | Enter to destroy | Esc to go back
+```
+
+### 2. Type Deployment Name
+
+For safety, you must type the exact deployment name:
+
+```
+Confirm Destruction
+
+┌═══════════════════════════════════════════════════┐
+║ You are about to destroy:                          ║
+║                                                    ║
+║ Deployment: production-claude                      ║
+║ Server IP: 203.0.113.45                           ║
+║                                                    ║
+║ This will permanently delete:                      ║
+║ • The VPS server (if deployed)                    ║
+║ • All data on the server                          ║
+║ • Local configuration files                       ║
+║ • SSH keys                                        ║
+└───────────────────────────────────────────────────┘
+
+Type the deployment name to confirm:
+Confirm: production-claude
+
+Press Esc to cancel
+```
+
+### 3. Destruction
+
+Once confirmed, destruction proceeds:
+
+```
+Destroying deployment...
+
+Deleting server and cleaning up resources...
+
+• Deleting VPS from Hetzner Cloud...
+• Deleting SSH key from cloud provider...
+• Removing local SSH key files...
+• Removing configuration files...
+• Cleaning up ~/.clawcontrol/deployments/production-claude/
+
+✓ Complete
+```
+
+### 4. Success
+
+```
+┌───────────────────────────────────────────────────┐
+│ Deployment Destroyed                              │
+│                                                   │
+│ The deployment "production-claude" has been       │
+│ permanently deleted.                              │
+└───────────────────────────────────────────────────┘
+
+Press any key to return to home
+```
+
+## What Gets Deleted
+
+### Cloud Resources
+
+1. **VPS Server** - The virtual machine is destroyed
+2. **Server Data** - All files and data on the server
+3. **Cloud SSH Key** - Public key uploaded to the provider
+4. **Assigned IP** - Server IP address is released
+
+### Local Resources
+
+1. **SSH Keys** - Private key file (`.pem`)
+2. **Configuration** - Deployment config (`.json`)
+3. **State Files** - Deployment state and checkpoints
+4. **Directory** - Entire deployment directory
+
+### What Doesn't Get Deleted
+
+- **Saved API Keys** - Reusable across deployments
+- **Saved Tokens** - Telegram bot tokens, etc.
+- **Templates** - Custom templates you've created
+- **Other Deployments** - Only the selected deployment is affected
+
+## Example Terminal Session
+
+```
+> /destroy
+
+/destroy - Select a deployment to destroy
+
+WARNING: This action cannot be undone!
+
+┌────────────────────────────────────────────┐
+│ > old-test-server      [deployed]          │
+│   production-claude    [deployed]          │
+└────────────────────────────────────────────┘
+
+[Enter]
+
+Confirm Destruction
+
+You are about to destroy:
+
+Deployment: old-test-server
+Server IP: 198.51.100.50
+
+This will permanently delete:
+• The VPS server (if deployed)
+• All data on the server
+• Local configuration files
+• SSH keys
+
+Type the deployment name to confirm:
+Confirm: old-test-server
+
+[Enter]
+
+Destroying deployment...
+
+Deleting server and cleaning up resources...
+
+✓ Deleted VPS from Hetzner Cloud
+✓ Deleted SSH key from cloud provider
+✓ Removed local configuration
+
+✓ Deployment Destroyed
+
+The deployment "old-test-server" has been permanently deleted.
+
+[Press any key]
+
+> _
+```
+
+## Safety Features
+
+### Name Confirmation
+
+You must type the exact deployment name to confirm:
+
+```
+Confirm: old-test-serve
+
+Name does not match. Please type the exact deployment name.
+```
+
+### Escape Anytime
+
+Press `Esc` at any point before final confirmation to cancel:
+
+```
+Confirm Destruction
+
+Type the deployment name to confirm:
+Confirm: prod_
+
+[Press Esc]
+
+/destroy - Select a deployment to destroy
+# Cancelled, back to selection
+```
+
+### Visual Warnings
+
+Multiple warnings are displayed:
+- Red border around confirmation dialog
+- "WARNING" text in destructive color
+- Explicit list of what will be deleted
+
+## Keyboard Navigation
+
+**Selection View:**
+- **↑/↓** - Navigate between deployments
+- **Enter** - Select deployment for destruction
+- **Esc** - Cancel and return to home
+
+**Confirmation View:**
+- **Type** - Enter deployment name
+- **Enter** - Confirm destruction (if name matches)
+- **Esc** - Cancel and go back
+
+## Error Handling
+
+### Server Already Deleted
+
+If the cloud server no longer exists:
+
+```
+Destroying deployment...
+
+⚠ Warning: Server not found in cloud provider
+  (May have been manually deleted)
+
+✓ Cleaned up local configuration
+✓ Deployment Destroyed
+```
+
+ClawControl continues with local cleanup.
+
+### API Error
+
+```
+Destruction Failed
+
+Failed to delete server: API authentication failed
+
+Local configuration has been preserved.
+Check your API key and try again.
+
+Press any key to go back
+```
+
+**Solutions:**
+1. Verify API key is still valid
+2. Try again: `/destroy`
+3. Manually delete via cloud provider console
+4. Run `/destroy` again to clean up local files
+
+### Partial Failure
+
+```
+Destroying deployment...
+
+✓ Deleted VPS from Hetzner Cloud
+✗ Failed to delete SSH key (key not found)
+✓ Removed local configuration
+
+✓ Deployment Destroyed
+
+Note: Some cloud resources may remain.
+Check your provider's console to verify cleanup.
+```
+
+## Empty State
+
+If no deployments exist:
+
+```
+/destroy - Destroy deployment
+
+┌────────────────────────────────────────────┐
+│ No deployments found!                      │
+└────────────────────────────────────────────┘
+
+Press any key to return to home
+```
+
+## Recovery
+
+<Warning>
+  There is no undo or recovery option. Destroyed deployments cannot be restored.
+</Warning>
+
+If you accidentally destroy a deployment:
+
+1. **Create a new deployment** with `/new`
+2. **Reconfigure** with the same settings
+3. **Redeploy** with `/deploy`
+
+Your data on the server is lost, but you can recreate the deployment configuration.
+
+## Best Practices
+
+### Before Destroying
+
+1. **Backup Data**
+   ```bash
+   # SSH into server
+   > /ssh
+   
+   # Backup important files
+   root@server:~# tar -czf backup.tar.gz /root/.openclaw/
+   root@server:~# exit
+   
+   # Download backup
+   scp -i ~/.clawcontrol/deployments/name/ssh_key.pem \
+       root@server:/root/backup.tar.gz .
+   ```
+
+2. **Export Configuration**
+   - Templates preserve configuration for reuse
+   - Create a template before destroying: `/templates`
+
+3. **Verify You're Destroying the Right One**
+   - Check with `/status` first
+   - Note the server IP
+   - Confirm it's the deployment you intend to destroy
+
+### After Destroying
+
+1. **Verify Cloud Cleanup**
+   - Log into your cloud provider console
+   - Confirm the server is deleted
+   - Verify you're not being billed
+
+2. **Clean Saved Keys (Optional)**
+   - Saved API keys persist after destruction
+   - Manually remove from `~/.clawcontrol/secrets/` if needed
+
+## Use Cases
+
+### Remove Test Deployment
+
+```
+# After testing
+> /destroy
+# Select: test-instance
+# Confirm: test-instance
+# ✓ Destroyed
+```
+
+### Replace Production Deployment
+
+```
+# Create new config with updated settings
+> /new
+Name: production-claude-v2
+
+# Deploy new instance
+> /deploy
+
+# Verify new instance works
+> /status
+> /ssh
+
+# Destroy old instance
+> /destroy
+# Select: production-claude
+```
+
+### Clean Up Failed Deployment
+
+```
+# Deployment failed and can't be fixed
+> /destroy
+# Select: broken-instance
+
+# Start fresh
+> /new
+```
+
+## Cost Savings
+
+<Tip>
+  Destroy unused deployments to avoid ongoing cloud costs. Even "stopped" instances may incur charges.
+</Tip>
+
+Hetzner CPX11: $4.99/month
+- 1 deployment = $4.99/month
+- 3 deployments = $14.97/month
+- Destroying saves real money!
+
+## Tips
+
+<Tip>
+  Create templates before destroying production deployments. This makes it easy to recreate the same configuration later.
+</Tip>
+
+<Note>
+  Destroying a deployment that has an active `/dashboard` or `/ssh` connection will cause those connections to fail. Close them first.
+</Note>
+
+## Next Steps
+
+After destroying a deployment:
+
+<CardGroup cols={2}>
+  <Card title="New Command" icon="plus" href="/cli/new">
+    Create a replacement deployment
+  </Card>
+  <Card title="Templates" icon="layer-group" href="/cli/templates">
+    Reuse saved configurations
+  </Card>
+  <Card title="Status Command" icon="chart-line" href="/cli/status">
+    Verify remaining deployments
+  </Card>
+  <Card title="Overview" icon="house" href="/cli/overview">
+    Return to CLI overview
+  </Card>
+</CardGroup>

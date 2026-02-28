@@ -1,0 +1,211 @@
+---
+title: 'Hetzner Cloud'
+description: 'Deploy OpenClaw instances on Hetzner Cloud infrastructure'
+icon: 'server'
+---
+
+Hetzner Cloud is a European cloud provider known for competitive pricing and reliable infrastructure. ClawControl provides full support for Hetzner, making it easy to deploy OpenClaw instances.
+
+## API Key Setup
+
+Before deploying to Hetzner, you need to obtain an API key:
+
+1. Sign up for a [Hetzner Cloud account](https://console.hetzner.cloud/)
+2. Navigate to your project in the Hetzner Cloud Console
+3. Go to **Security** → **API Tokens**
+4. Click **Generate API Token**
+5. Give it a descriptive name (e.g., "ClawControl")
+6. Select **Read & Write** permissions
+7. Copy the token immediately (it won't be shown again)
+
+<Warning>
+  Store your API key securely. Anyone with this key can create and manage servers in your Hetzner project.
+</Warning>
+
+## Configuration Options
+
+Hetzner deployments support the following configuration options:
+
+### Server Type
+
+Choose from various server types based on your needs:
+
+| Server Type | vCPUs | RAM | Disk | Price/Month (US East) |
+|-------------|-------|-----|------|----------------------|
+| **cpx11** (default) | 2 | 2 GB | 40 GB | ~$4.99 |
+| cpx21 | 3 | 4 GB | 80 GB | ~$9.99 |
+| cpx31 | 4 | 8 GB | 160 GB | ~$19.99 |
+| cpx41 | 8 | 16 GB | 240 GB | ~$39.99 |
+
+<Tip>
+  The **cpx11** server type is recommended for basic OpenClaw deployments and provides excellent value.
+</Tip>
+
+### Location
+
+Available Hetzner locations:
+
+- **ash** (Ashburn, VA, USA) - Default, lowest latency for US East
+- **fsn1** (Falkenstein, Germany)
+- **nbg1** (Nuremberg, Germany)
+- **hel1** (Helsinki, Finland)
+- **hil** (Hillsboro, OR, USA)
+
+### Image
+
+ClawControl uses **ubuntu-24.04** as the default operating system image, which is fully tested and supported.
+
+## Default Configuration
+
+When you create a new Hetzner deployment, these defaults are used:
+
+```typescript
+{
+  apiKey: string,           // Your Hetzner API key
+  serverType: "cpx11",      // 2 vCPU, 2GB RAM
+  location: "ash",          // Ashburn, VA (US East)
+  image: "ubuntu-24.04"     // Ubuntu 24.04 LTS
+}
+```
+
+## Creating a Deployment
+
+Using the ClawControl CLI:
+
+```bash
+clawcontrol /new
+```
+
+Select **Hetzner** as your provider and provide:
+
+1. **Deployment Name**: A unique identifier for this deployment
+2. **API Key**: Your Hetzner API token
+3. **Server Type**: Choose from available options (default: cpx11)
+4. **Location**: Select a datacenter location (default: ash)
+5. **OpenClaw Configuration**: AI provider, model, and channel settings
+
+## Deployment Process
+
+When you run `/deploy`, ClawControl will:
+
+1. **Create SSH Key**: Generates and uploads an SSH key to Hetzner
+2. **Provision Server**: Creates a new server with your specifications
+3. **Configure System**: Installs Node.js, Chrome, and dependencies
+4. **Install OpenClaw**: Deploys and configures the OpenClaw agent
+5. **Setup Tailscale**: Configures secure VPN access (optional)
+6. **Start Services**: Launches OpenClaw as a systemd service
+
+<Note>
+  The entire deployment process typically takes 5-10 minutes depending on server provisioning time.
+</Note>
+
+## API Operations
+
+ClawControl uses the Hetzner Cloud API to manage your deployment:
+
+### Server Management
+- Create, delete, and list servers
+- Power on/off and reboot operations
+- Monitor server status and wait for ready state
+
+### SSH Key Management
+- Upload public SSH keys for secure access
+- List and delete SSH keys
+- Retrieve SSH key details by ID
+
+### Resource Information
+- List available server types and pricing
+- Query available locations and regions
+- Check action status and progress
+
+## Monitoring Your Deployment
+
+After deployment, use these commands to monitor your instance:
+
+```bash
+# View deployment status
+clawcontrol /status
+
+# SSH into your server
+clawcontrol /ssh
+
+# View OpenClaw logs
+clawcontrol /logs
+```
+
+## Pricing and Billing
+
+Hetzner charges are:
+- **Hourly billing** with monthly caps
+- **No data transfer fees** for the first 20TB
+- **Automated billing** charged to your payment method
+
+<Tip>
+  You can view detailed pricing in the [Hetzner Cloud Console](https://console.hetzner.cloud/) under your project's billing section.
+</Tip>
+
+## Advanced Configuration
+
+### Custom Server Types
+
+If you need more resources, you can specify different server types:
+
+- **CX series**: Shared vCPU (cost-effective)
+- **CPX series**: Dedicated vCPU (balanced, default)
+- **CCX series**: High-performance dedicated CPUs
+
+### Regional Considerations
+
+Choose your location based on:
+- **Latency**: Select the region closest to your users
+- **Compliance**: EU regions for GDPR compliance
+- **Pricing**: Prices may vary slightly by region
+
+## Troubleshooting
+
+### API Key Issues
+
+If you encounter authentication errors:
+
+1. Verify your API key has **Read & Write** permissions
+2. Ensure the token hasn't been deleted or expired
+3. Check that you're using the correct project
+
+### Server Creation Failures
+
+Common issues:
+- **Quota limits**: Check your Hetzner project limits
+- **Region availability**: Try a different location if servers are unavailable
+- **Resource limits**: Ensure your account has sufficient resources
+
+### Connection Problems
+
+If SSH connection fails:
+
+1. Verify the server is in "running" state
+2. Check that SSH keys were properly uploaded
+3. Ensure your local SSH client is configured correctly
+
+## Cleanup and Deletion
+
+To remove a deployment:
+
+```bash
+clawcontrol /destroy
+```
+
+This will:
+- Delete the server from Hetzner
+- Remove uploaded SSH keys
+- Clean up local configuration files
+
+<Warning>
+  Destroying a deployment is permanent. Make sure to backup any important data before deletion.
+</Warning>
+
+## Additional Resources
+
+- [Hetzner Cloud Documentation](https://docs.hetzner.cloud/)
+- [Hetzner Cloud Console](https://console.hetzner.cloud/)
+- [Hetzner API Reference](https://docs.hetzner.cloud/cloud/api/getting-started/)
+- [OpenClaw Documentation](https://docs.openclaw.ai/)
