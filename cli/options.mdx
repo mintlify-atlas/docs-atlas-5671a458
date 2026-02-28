@@ -36,7 +36,7 @@ clawcontrol -h
 ```
 
 **Output:**
-```
+```text
 clawcontrol v0.2.3
 CLI tool for deploying and managing OpenClaw instances on VPS providers
 
@@ -44,14 +44,46 @@ Usage:
   clawcontrol            Launch the interactive TUI
   clawcontrol --help     Show this help message
   clawcontrol --version  Show the version number
+  clawcontrol --update   Update to the latest version
 
 Options:
   -h, --help     Show this help message
   -v, --version  Show the version number
+  -u, --update   Update clawcontrol to the latest version
+
+Environment:
+  CLAWCONTROL_SKIP_UPDATE=1   Skip the automatic update check on startup
 
 Documentation & source:
   https://github.com/ipenywis/clawcontrol
 ```
+
+### Update
+
+Update ClawControl to the latest version:
+
+```bash
+clawcontrol --update
+clawcontrol -u
+```
+
+**Example output:**
+```text
+[update] Checking for updates...
+[update] New version available: v0.2.3 -> v0.2.4
+[update] Updating clawcontrol...
+[update] Updated to v0.2.4
+```
+
+This command:
+- Fetches the latest version from npm registry
+- Updates via `bun add -g clawcontrol@latest`
+- Shows progress and success/failure messages
+- Requires Bun to be installed
+
+<Note>
+  ClawControl automatically checks for updates on startup and updates itself unless `CLAWCONTROL_SKIP_UPDATE=1` is set.
+</Note>
 
 ### Interactive TUI (Default)
 
@@ -113,12 +145,25 @@ No global configuration file exists. All settings are per-deployment.
 
 ### Environment Variables
 
-ClawControl doesn't currently use environment variables, but may in future versions for:
+ClawControl supports the following environment variable:
 
-- Default cloud provider
-- Default AI provider  
-- Debug logging
-- Custom config directory
+#### CLAWCONTROL_SKIP_UPDATE
+
+Skip the automatic update check on startup:
+
+```bash
+CLAWCONTROL_SKIP_UPDATE=1 clawcontrol
+```
+
+Use this when:
+- You want to stay on a specific version
+- You're running in CI/CD pipelines
+- You're developing locally and don't want interruptions
+- You have network restrictions
+
+<Note>
+  The automatic update check runs on every launch (unless skipped) and updates ClawControl if a newer version is available on npm.
+</Note>
 
 ## Terminal Compatibility
 
@@ -272,22 +317,49 @@ echo $?
 
 ## Updates
 
-Check for updates:
+### Automatic Updates
+
+ClawControl automatically checks for updates on every launch and updates itself:
 
 ```bash
-npm outdated -g clawcontrol
+clawcontrol
+# If update available:
+# [update] New version available: v0.2.3 -> v0.2.4
+# [update] Updating clawcontrol...
+# [update] Updated to v0.2.4
+# [update] Restarting with updated version...
 ```
 
-Update to latest:
+To skip automatic updates:
 
 ```bash
-npm install -g clawcontrol@latest
+CLAWCONTROL_SKIP_UPDATE=1 clawcontrol
 ```
 
-Verify update:
+### Manual Update
+
+Force an update check and install:
+
+```bash
+clawcontrol --update
+```
+
+### Check Current Version
 
 ```bash
 clawcontrol --version
+```
+
+### Update via Package Manager
+
+You can also update manually via npm/pnpm/bun:
+
+```bash
+npm install -g clawcontrol@latest
+# or
+pnpm add -g clawcontrol@latest
+# or
+bun add -g clawcontrol@latest
 ```
 
 ## Uninstall
