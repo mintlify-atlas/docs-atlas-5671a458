@@ -1,0 +1,128 @@
+{
+  "projectType": "cli-tool",
+  "projectName": "ClawControl",
+  "projectDescription": "CLI tool for deploying and managing OpenClaw instances on VPS providers",
+  "theme": "aspen",
+  "primaryColor": "#6366f1",
+  "lightColor": "#818cf8",
+  "darkColor": "#4f46e5",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/deployments",
+              "concepts/templates",
+              "concepts/providers",
+              "concepts/checkpoints"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/first-deployment",
+              "guides/using-templates",
+              "guides/managing-deployments",
+              "guides/ssh-access",
+              "guides/monitoring-logs",
+              "guides/destroying-deployments"
+            ]
+          },
+          {
+            "group": "Cloud Providers",
+            "pages": [
+              "providers/overview",
+              "providers/hetzner",
+              "providers/digitalocean"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/deployment-config",
+              "configuration/openclaw-config",
+              "configuration/secrets"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "CLI Reference",
+        "groups": [
+          {
+            "group": "Commands",
+            "pages": [
+              "cli/overview",
+              "cli/new",
+              "cli/deploy",
+              "cli/status",
+              "cli/ssh",
+              "cli/logs",
+              "cli/dashboard",
+              "cli/destroy",
+              "cli/templates",
+              "cli/channels",
+              "cli/help"
+            ]
+          },
+          {
+            "group": "Options",
+            "pages": [
+              "cli/options"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Development",
+        "groups": [
+          {
+            "group": "Contributing",
+            "pages": [
+              "development/setup",
+              "development/architecture",
+              "development/testing"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Automated VPS provisioning on Hetzner and DigitalOcean",
+    "Interactive TUI with command palette (/new, /deploy, /status, etc.)",
+    "Template system for reusable deployment configurations",
+    "Checkpoint-based deployment recovery",
+    "Automated OpenClaw installation and configuration",
+    "Tailscale VPN integration for secure access",
+    "SSH key management and secure connections",
+    "Real-time log streaming and monitoring",
+    "Deployment lifecycle management (create, deploy, monitor, destroy)"
+  ],
+  "publicApiSurface": [
+    "clawcontrol (main CLI entry point)",
+    "/new - Initialize new deployment",
+    "/deploy - Deploy to cloud",
+    "/status - View deployment status",
+    "/ssh - SSH into deployment",
+    "/logs - Stream deployment logs",
+    "/dashboard - View deployment dashboard",
+    "/destroy - Delete deployment",
+    "/templates - Manage templates",
+    "/channels - Manage channels",
+    "/help - Show help",
+    "--version/-v - Show version",
+    "--help/-h - Show help message"
+  ]
+}
